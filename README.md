@@ -12,7 +12,7 @@ Manual installation:
 
 #Setup
 1. Fill in your Newsman API KEY and User ID and click connect
-![](https://raw.githubusercontent.com/Newsman/OpenCart2.3-Newsman/master/assets/api-setup-screen-opencart23.png)
+![](https://raw.githubusercontent.com/Newsman/OpenCart2.3-Newsman/master/assets/api-setup-screen-opencart23.png.png)
 
 2. Choose List for your newsletter subscribers
 For the lists to show up in this form, you need to set up your user id and api key.
