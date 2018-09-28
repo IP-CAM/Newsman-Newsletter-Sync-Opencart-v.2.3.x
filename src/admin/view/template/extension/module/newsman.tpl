@@ -1,0 +1,38 @@
+<?php echo $header; ?><?php echo $column_left; ?>
+<div id="content">
+    <div class="page-header">
+        <div class="container-fluid">
+            <h1>Newsman-Opencart Integration</h1>
+        </div>
+        <div>
+            <h3><?php echo $message; ?></h3>
+        </div>
+    </div>
+    <div class="container">
+        <div class="col-md-5">
+            <div class="form-group">
+                <form method="post" id="newsman_form">
+                    <div>
+                        <label>User Id</label>
+                        <input type="text" name="userid" placeholder="user id" value="<?php echo $userid; ?>" class="form-control"/>
+                        <label>Api Key</label>
+                        <input type="text" name="apikey" placeholder="api key" value="<?php echo $apikey; ?>" class="form-control"/>
+                        <input type="submit" name="newsmanSubmit" value="Save" class="btn btn-primary">
+                    </div>
+                    <div>
+                        <label>List</label>
+                        <select name="list" class="form-control">
+                            <?php echo $list; ?>
+                        </select>
+                        <input type="submit" name="newsmanSubmitSaveList" value="Save List" class="btn btn-primary">
+                        <input type="submit" name="newsmanSubmitList" value="Import" class="btn btn-primary">
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <b>CRON:</b><p>{yoursiteurl}/index.php?route=extension/module/newsman&cron=true</p>
+        </div>
+    </div>
+</div>
+<?php echo $footer; ?>
