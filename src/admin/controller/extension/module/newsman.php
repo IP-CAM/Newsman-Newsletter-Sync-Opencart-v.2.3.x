@@ -289,9 +289,9 @@ die($this->restCallParams);
 		$data = array();
 	}
 
-	public function getSubscribers($data = array())
+	public function getSubscribers()
 	{
-		$sql = "SELECT * FROM " . DB_PREFIX . "subscribers";
+		$sql = "SELECT * FROM " . DB_PREFIX . "newsletter";
 
 		$query = $this->db->query($sql);
 
