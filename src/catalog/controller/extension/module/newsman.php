@@ -30,9 +30,7 @@ class ControllerExtensionmoduleNewsman extends Controller
 			$csvdata = $this->getCustomers();
 
 			if (empty($csvdata))
-			{
-				$data["message"] = "No customers or subscribers in your store";
-				$this->SetOutput($data);
+			{			
 				return;
 			}
 
@@ -71,8 +69,7 @@ class ControllerExtensionmoduleNewsman extends Controller
 
 				if (empty($csvdata))
 				{
-					$data["message"] .= PHP_EOL . "No subscribers in your store";
-					$this->SetOutput($data);
+
 					return;
 				}
 
@@ -98,9 +95,7 @@ class ControllerExtensionmoduleNewsman extends Controller
 				}
 
 				unset($customers_to_import);
-
-				$data["message"] .= PHP_EOL . "Subscribers imported successfully";
-
+				
 			}
 			catch(Exception $ex)
 			{
