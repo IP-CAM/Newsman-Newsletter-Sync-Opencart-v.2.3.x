@@ -173,7 +173,7 @@ die($this->restCallParams);
 		foreach ($data as $_dat)
 		{
 			$csv .= sprintf(
-				"%s,%s,%s",
+				"%s,%s",
 				self::safeForCsv($_dat["email"]),
 				$source
 			);
