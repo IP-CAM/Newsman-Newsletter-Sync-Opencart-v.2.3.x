@@ -160,9 +160,7 @@ class ControllerExtensionModuleNewsman extends Controller
 					$this->_importDatas($customers_to_import, $setting["newsmanlistid"], null, $client);
 				}
 
-				unset($customers_to_import);
-
-				$data["message"] .= PHP_EOL . "Subscribers imported successfully";
+				unset($customers_to_import);				
 
 			}
 			catch(Exception $ex)
