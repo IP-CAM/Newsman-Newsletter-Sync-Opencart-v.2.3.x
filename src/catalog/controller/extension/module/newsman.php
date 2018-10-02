@@ -29,19 +29,121 @@ class ControllerExtensionmoduleNewsman extends Controller
 
 			$csvdata = $this->getCustomers();
 
-			$csv = "email,name,source" . PHP_EOL;
+			if (empty($csvdata))
+			{
+				$data["message"] = "No customers or subscribers in your store";
+				$this->SetOutput($data);
+				return;
+			}
+
+			//Import
+			$batchSize = 5000;
+
+			$customers_to_import = array();
+
+			foreach ($csvdata as $item)
+			{
+				$customers_to_import[] = array(
+					"email" => $item["email"],
+					"firstname" => $item["firstname"]
+				);
+
+				if ((count($customers_to_import) % $batchSize) == 0)
+				{
+					$this->_importData($customers_to_import, $setting["newsmanlistid"], null, $client);
+				}
+			}
+
+			if (count($customers_to_import) > 0)
+			{
+				$this->_importData($customers_to_import, $setting["newsmanlistid"], null, $client);
+			}
+
+			unset($customers_to_import);
+			//Import
+
+			//Subscribers table
+
+			try
+			{
+
+				$csvdata = $this->getSubscribers();
+
+				if (empty($csvdata))
+				{
+					$data["message"] .= PHP_EOL . "No subscribers in your store";
+					$this->SetOutput($data);
+					return;
+				}
+
+				$batchSize = 5000;
+
+				$customers_to_import = array();
+
+				foreach ($csvdata as $item)
+				{
+					$customers_to_import[] = array(
+						"email" => $item["email"]
+					);
+
+					if ((count($customers_to_import) % $batchSize) == 0)
+					{
+						$this->_importDatas($customers_to_import, $setting["newsmanlistid"], null, $client);
+					}
+				}
+
+				if (count($customers_to_import) > 0)
+				{
+					$this->_importDatas($customers_to_import, $setting["newsmanlistid"], null, $client);
+				}
+
+				unset($customers_to_import);
+
+				$data["message"] .= PHP_EOL . "Subscribers imported successfully";
+
+			}
+			catch(Exception $ex)
+			{
+				
+			}
+
+			//Subscribers table
+
+			/*$csv = "email,name,source" . PHP_EOL;
+
+			$batchSize = 5000;
+
+			$edata = array();
+
 			foreach ($csvdata as $row)
 			{
 				if ($row["newsletter"] == "1" && $row["status"] == "1")
 				{
-					$csv .= $row['email'] . ","
-						. $row['firstname'] . " " . $row["lastname"] . ","
-						. "opencart3 newsman plugin"
-						. PHP_EOL;
+					$edata["email"][] = $row["email"];
+					$edata["firstname"][] = $row["firstname"];
+					$edata["lastname"][] = $row["lastname"];
 				}
 			}
 
-			$ret = $client->import->csv($setting["newsmanlistid"], array(), $csv);
+			$max = (count($edata["email"]) <= 5000) ? count($edata["email"]) : 5000;
+
+			for ($int = 0; $int < count($edata["email"]); $int++)
+			{
+				$csv .= $edata['email'][$int] . ","
+					. $edata['firstname'][$int] . " " . $edata["lastname"][$int] . ","
+					. "opencart newsman plugin"
+					. PHP_EOL;
+
+				if ($int == $max)
+				{
+					$max += (count($edata["email"]) - $int <= 5000) ? count($edata["email"]) - $int : 5000;
+
+					$ret = $client->import->csv($setting["newsmanlistid"], array(), $csv);
+
+					$csv = "";
+					$csv = "email,name,source" . PHP_EOL;
+				}
+			}*/
 
 			/*$this->restCallParams = str_replace("{{params}}", "?list_id=" . $_POST["list"] . "&segments=" . "&csv_data=" . $csv, $this->restCallParams);
 die($this->restCallParams);
@@ -50,7 +152,87 @@ die($this->restCallParams);
 		}
 		//List Import
 
+		echo "Cron successfully done";
 		return $this->load->view('extension/module/newsman', $data);
+	}
+
+	public function getSubscribers($data = array())
+	{
+		$sql = "SELECT * FROM " . DB_PREFIX . "subscribers";
+
+		$query = $this->db->query($sql);
+
+		return $query->rows;
+	}
+
+	public function _importDatas(&$data, $list, $segments = null, $client)
+	{
+		$csv = '"email","source"' . PHP_EOL;
+
+		$source = self::safeForCsv("opencart 2.3 newsman plugin");
+		foreach ($data as $_dat)
+		{
+			$csv .= sprintf(
+				"%s,%s,%s",
+				self::safeForCsv($_dat["email"]),
+				$source
+			);
+			$csv .= PHP_EOL;
+		}
+
+		$ret = null;
+		try
+		{
+			$ret = $client->import->csv($list, array(), $csv);
+
+			if ($ret == "")
+			{
+				throw new Exception("Import failed");
+			}
+		} catch (Exception $e)
+		{
+
+		}
+
+		$data = array();
+	}
+
+	public static function safeForCsv($str)
+	{
+		return '"' . str_replace('"', '""', $str) . '"';
+	}
+
+	public function _importData(&$data, $list, $segments = null, $client)
+	{
+		$csv = '"email","firstname","source"' . PHP_EOL;
+
+		$source = self::safeForCsv("opencart 2.3 newsman plugin");
+		foreach ($data as $_dat)
+		{
+			$csv .= sprintf(
+				"%s,%s,%s",
+				self::safeForCsv($_dat["email"]),
+				self::safeForCsv($_dat["firstname"]),
+				$source
+			);
+			$csv .= PHP_EOL;
+		}
+
+		$ret = null;
+		try
+		{
+			$ret = $client->import->csv($list, array(), $csv);
+
+			if ($ret == "")
+			{
+				throw new Exception("Import failed");
+			}
+		} catch (Exception $e)
+		{
+
+		}
+
+		$data = array();
 	}
 
 	public function getCustomers($data = array())
