@@ -14,9 +14,11 @@
                 <form method="post" id="newsman_form">
                     <div>
                         <label>User Id</label>
-                        <input type="text" name="userid" placeholder="user id" value="<?php echo $userid; ?>" class="form-control"/>
+                        <input type="text" name="userid" placeholder="user id" value="<?php echo $userid; ?>"
+                               class="form-control"/>
                         <label>Api Key</label>
-                        <input type="text" name="apikey" placeholder="api key" value="<?php echo $apikey; ?>" class="form-control"/>
+                        <input type="text" name="apikey" placeholder="api key" value="<?php echo $apikey; ?>"
+                               class="form-control"/>
                         <input type="submit" name="newsmanSubmit" value="Save" class="btn btn-primary">
                     </div>
                     <div>
@@ -25,13 +27,23 @@
                             <?php echo $list; ?>
                         </select>
                         <input type="submit" name="newsmanSubmitSaveList" value="Save List" class="btn btn-primary">
+                    </div>
+                    <div style="padding-top: 15px;">
+                        <label>Segment (Make sure you select list and save)</label>
+                        <select name="segment" class="form-control">
+                            <?php echo $segment; ?>
+                        </select>
+                        <input type="submit" name="newsmanSubmitSaveSegment" value="Save Segment" class="btn btn-primary">
+                    </div>
+                    <div>
                         <input type="submit" name="newsmanSubmitList" value="Import" class="btn btn-primary">
                     </div>
                 </form>
             </div>
         </div>
         <div class="col-md-12">
-            <b>CRON:</b><p>{yoursiteurl}/index.php?route=extension/module/newsman&cron=true</p>
+            <b>CRON:</b>
+            <p>{yoursiteurl}/index.php?route=extension/module/newsman&cron=true</p>
         </div>
     </div>
 </div>

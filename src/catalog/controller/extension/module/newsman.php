@@ -39,6 +39,13 @@ class ControllerExtensionmoduleNewsman extends Controller
 
 			$customers_to_import = array();
 
+			$segments = null;
+
+			if ($setting["newsmansegment"] != "1" && $setting["newsmansegment"] != null)
+			{
+				$segments = array($setting["newsmansegment"]);
+			}
+
 			foreach ($csvdata as $item)
 			{
 				$customers_to_import[] = array(
@@ -48,13 +55,13 @@ class ControllerExtensionmoduleNewsman extends Controller
 
 				if ((count($customers_to_import) % $batchSize) == 0)
 				{
-					$this->_importData($customers_to_import, $setting["newsmanlistid"], null, $client);
+					$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
 				}
 			}
 
 			if (count($customers_to_import) > 0)
 			{
-				$this->_importData($customers_to_import, $setting["newsmanlistid"], null, $client);
+				$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
 			}
 
 			unset($customers_to_import);
@@ -85,13 +92,13 @@ class ControllerExtensionmoduleNewsman extends Controller
 
 					if ((count($customers_to_import) % $batchSize) == 0)
 					{
-						$this->_importDatas($customers_to_import, $setting["newsmanlistid"], null, $client);
+						$this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
 					}
 				}
 
 				if (count($customers_to_import) > 0)
 				{
-					$this->_importDatas($customers_to_import, $setting["newsmanlistid"], null, $client);
+					$this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
 				}
 
 				unset($customers_to_import);
@@ -144,10 +151,13 @@ class ControllerExtensionmoduleNewsman extends Controller
 die($this->restCallParams);
 			$_data = json_decode(file_get_contents($this->restCallParams), true);
 			*/
+
+			echo "Cron successfully done";
 		}
 		//List Import
-
-		echo "Cron successfully done";
+		else{
+			echo "Incorrect params, follow instructions for cron url";
+		}
 		return $this->load->view('extension/module/newsman', $data);
 	}
 
@@ -178,7 +188,7 @@ die($this->restCallParams);
 		$ret = null;
 		try
 		{
-			$ret = $client->import->csv($list, array(), $csv);
+			$ret = $client->import->csv($list, $segments, $csv);
 
 			if ($ret == "")
 			{
@@ -216,7 +226,7 @@ die($this->restCallParams);
 		$ret = null;
 		try
 		{
-			$ret = $client->import->csv($list, array(), $csv);
+			$ret = $client->import->csv($list, $segments, $csv);
 
 			if ($ret == "")
 			{

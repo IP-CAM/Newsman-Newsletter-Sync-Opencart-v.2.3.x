@@ -27,6 +27,8 @@ class ControllerExtensionModuleNewsman extends Controller
 
 		$data["list"] = "<option value=''>Select List</option>";
 
+		$data["segment"] = "<option value=''>Select Segment</option>";
+
 		if (isset($_POST["newsmanSubmit"]))
 		{
 			if (empty($_POST["userid"]) || empty($_POST["apikey"]))
@@ -75,9 +77,28 @@ class ControllerExtensionModuleNewsman extends Controller
 			$data["message"] = "List is saved";
 		}
 
+		if (isset($_POST["newsmanSubmitSaveSegment"]))
+		{
+			if (empty($_POST["segment"]))
+			{
+				$data["message"] = "Please select a segment";
+				$this->SetOutput($data);
+				return;
+			}
+
+			$settings = $setting;
+			$settings["newsmansegment"] = $_POST["segment"];
+
+			$this->model_setting_setting->editSetting('newsman', $settings);
+
+			$data["message"] = "Segment is saved";
+		}
+
 		//List Import
 		if (isset($_POST["newsmanSubmitList"]))
 		{
+			$this->restCallParams = "https://ssl.newsman.app/api/1.2/rest/{{userid}}/{{apikey}}/{{method}}{{params}}";
+
 			$this->restCallParams = str_replace("{{userid}}", $setting["newsmanuserid"], $this->restCallParams);
 			$this->restCallParams = str_replace("{{apikey}}", $setting["newsmanapikey"], $this->restCallParams);
 			$this->restCallParams = str_replace("{{method}}", "import.csv.json", $this->restCallParams);
@@ -103,6 +124,13 @@ class ControllerExtensionModuleNewsman extends Controller
 
 			$customers_to_import = array();
 
+			$segments = null;
+
+			if ($setting["newsmansegment"] != "1" && $setting["newsmansegment"] != null)
+			{
+				$segments = array($setting["newsmansegment"]);
+			}
+
 			foreach ($csvdata as $item)
 			{
 				$customers_to_import[] = array(
@@ -112,13 +140,13 @@ class ControllerExtensionModuleNewsman extends Controller
 
 				if ((count($customers_to_import) % $batchSize) == 0)
 				{
-					$this->_importData($customers_to_import, $setting["newsmanlistid"], null, $client);
+					$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
 				}
 			}
 
 			if (count($customers_to_import) > 0)
 			{
-				$this->_importData($customers_to_import, $setting["newsmanlistid"], null, $client);
+				$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
 			}
 
 			unset($customers_to_import);
@@ -151,19 +179,18 @@ class ControllerExtensionModuleNewsman extends Controller
 
 					if ((count($customers_to_import) % $batchSize) == 0)
 					{
-						$this->_importDatas($customers_to_import, $setting["newsmanlistid"], null, $client);
+						$this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
 					}
 				}
 
 				if (count($customers_to_import) > 0)
 				{
-					$this->_importDatas($customers_to_import, $setting["newsmanlistid"], null, $client);
+					$this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
 				}
 
-				unset($customers_to_import);				
+				unset($customers_to_import);
 
-			}
-			catch(Exception $ex)
+			} catch (Exception $ex)
 			{
 				$this->SetOutput($data);
 			}
@@ -241,7 +268,7 @@ die($this->restCallParams);
 		$ret = null;
 		try
 		{
-			$ret = $client->import->csv($list, array(), $csv);
+			$ret = $client->import->csv($list, $segments, $csv);
 
 			if ($ret == "")
 			{
@@ -273,7 +300,7 @@ die($this->restCallParams);
 		$ret = null;
 		try
 		{
-			$ret = $client->import->csv($list, array(), $csv);
+			$ret = $client->import->csv($list, $segments, $csv);
 
 			if ($ret == "")
 			{
@@ -310,15 +337,38 @@ die($this->restCallParams);
 			$this->restCall = str_replace("{{apikey}}", $setting["newsmanapikey"], $this->restCall);
 			$this->restCall = str_replace("{{method}}", "list.all.json", $this->restCall);
 
+			$this->restCallParams = "https://ssl.newsman.app/api/1.2/rest/{{userid}}/{{apikey}}/{{method}}{{params}}";
+
+			$this->restCallParams = str_replace("{{userid}}", $setting["newsmanuserid"], $this->restCallParams);
+			$this->restCallParams = str_replace("{{apikey}}", $setting["newsmanapikey"], $this->restCallParams);
+
 			$_data = json_decode(file_get_contents($this->restCall), true);
 
 			$data["list"] = "";
+
+			$data["segment"] = "";
+			$data["segment"] .= "<option value='1'>No segment</option>";
 
 			foreach ($_data as $list)
 			{
 				if (!empty($setting["newsmanlistid"]) && $setting["newsmanlistid"] == $list["list_id"])
 				{
 					$data["list"] .= "<option selected value='" . $list["list_id"] . "'>" . $list["list_name"] . "</option>";
+
+					$this->restCallParams = str_replace("{{method}}", "segment.all.json", $this->restCallParams);
+					$this->restCallParams = str_replace("{{params}}", "?list_id=" . $setting["newsmanlistid"], $this->restCallParams);
+					$_data = json_decode(file_get_contents($this->restCallParams), true);
+
+					foreach ($_data as $segment)
+					{
+						if (!empty($setting["newsmansegment"]) && $setting["newsmansegment"] == $segment["segment_id"])
+						{
+							$data["segment"] .= "<option selected value='" . $segment["segment_id"] . "'>" . $segment["segment_name"] . "</option>";
+						} else
+						{
+							$data["segment"] .= "<option value='" . $segment["segment_id"] . "'>" . $segment["segment_name"] . "</option>";
+						}
+					}
 				} else
 				{
 					$data["list"] .= "<option value='" . $list["list_id"] . "'>" . $list["list_name"] . "</option>";
