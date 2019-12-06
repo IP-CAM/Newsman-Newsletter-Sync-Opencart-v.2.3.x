@@ -133,6 +133,11 @@ class ControllerExtensionModuleNewsman extends Controller
 
 			foreach ($csvdata as $item)
 			{
+				if ($item["newsletter"] == 0)
+				{
+					continue;
+				}
+
 				$customers_to_import[] = array(
 					"email" => $item["email"],
 					"firstname" => $item["firstname"]
