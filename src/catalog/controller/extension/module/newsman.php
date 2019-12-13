@@ -27,59 +27,32 @@ class ControllerExtensionmoduleNewsman extends Controller
 
 			$csvdata = array();
 
-			$csvdata = $this->getCustomers();
+			$csvcustomers = $this->getCustomers();
+
+			$csvdata = $this->getOrders();
 
 			if (empty($csvdata))
-			{			
+			{
+				$data["message"] .= PHP_EOL . "No data present in your store";
+				$this->SetOutput($data);
 				return;
 			}
 
-			//Import
-			$batchSize = 5000;
-
-			$customers_to_import = array();
-
 			$segments = null;
 
-			if ($setting["newsmansegment"] != "1" && $setting["newsmansegment"] != null)
+			if (array_key_exists("newsmansegment", $setting))
 			{
-				$segments = array($setting["newsmansegment"]);
-			}
-
-			foreach ($csvdata as $item)
-			{
-				$customers_to_import[] = array(
-					"email" => $item["email"],
-					"firstname" => $item["firstname"]
-				);
-
-				if ((count($customers_to_import) % $batchSize) == 0)
+				if ($setting["newsmansegment"] != "1" && $setting["newsmansegment"] != null)
 				{
-					$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+					$segments = array($setting["newsmansegment"]);
 				}
 			}
 
-			if (count($customers_to_import) > 0)
-			{
-				$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
-			}
-
-			unset($customers_to_import);
 			//Import
 
-			//Subscribers table
-
-			try
+			if ($setting["newsmantype"] == "customers")
 			{
-
-				$csvdata = $this->getSubscribers();
-
-				if (empty($csvdata))
-				{
-
-					return;
-				}
-
+				//Customers
 				$batchSize = 5000;
 
 				$customers_to_import = array();
@@ -87,78 +60,202 @@ class ControllerExtensionmoduleNewsman extends Controller
 				foreach ($csvdata as $item)
 				{
 					$customers_to_import[] = array(
-						"email" => $item["email"]
+						"email" => $item["email"],
+						"firstname" => $item["firstname"]
 					);
 
 					if ((count($customers_to_import) % $batchSize) == 0)
 					{
-						$this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+						$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
 					}
 				}
 
 				if (count($customers_to_import) > 0)
 				{
-					$this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+					$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
 				}
 
 				unset($customers_to_import);
-				
-			}
-			catch(Exception $ex)
+
+			} else
 			{
-				
-			}
-
-			//Subscribers table
-
-			/*$csv = "email,name,source" . PHP_EOL;
-
-			$batchSize = 5000;
-
-			$edata = array();
-
-			foreach ($csvdata as $row)
-			{
-				if ($row["newsletter"] == "1" && $row["status"] == "1")
+				//Subscribers table
+				try
 				{
-					$edata["email"][] = $row["email"];
-					$edata["firstname"][] = $row["firstname"];
-					$edata["lastname"][] = $row["lastname"];
-				}
-			}
+					$batchSize = 5000;
 
-			$max = (count($edata["email"]) <= 5000) ? count($edata["email"]) : 5000;
+					$customers_to_import = array();
 
-			for ($int = 0; $int < count($edata["email"]); $int++)
-			{
-				$csv .= $edata['email'][$int] . ","
-					. $edata['firstname'][$int] . " " . $edata["lastname"][$int] . ","
-					. "opencart newsman plugin"
-					. PHP_EOL;
+					foreach ($csvcustomers as $item)
+					{
+						if ($item["newsletter"] == 0)
+						{
+							continue;
+						}
 
-				if ($int == $max)
+						$customers_to_import[] = array(
+							"email" => $item["email"],
+							"firstname" => $item["firstname"]
+						);
+
+						if ((count($customers_to_import) % $batchSize) == 0)
+						{
+							$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+						}
+					}
+
+					if (count($customers_to_import) > 0)
+					{
+						$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+					}
+
+					unset($customers_to_import);
+
+					$csvdata = $this->getSubscribers();
+
+					if (empty($csvdata))
+					{
+						$data["message"] .= PHP_EOL . "No subscribers in your store";
+						$this->SetOutput($data);
+						return;
+					}
+
+					$batchSize = 5000;
+
+					$customers_to_import = array();
+
+					foreach ($csvdata as $item)
+					{
+						$customers_to_import[] = array(
+							"email" => $item["email"]
+						);
+
+						if ((count($customers_to_import) % $batchSize) == 0)
+						{
+							$this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+						}
+					}
+
+					if (count($customers_to_import) > 0)
+					{
+						$this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+					}
+
+					unset($customers_to_import);
+
+				} catch (Exception $ex)
 				{
-					$max += (count($edata["email"]) - $int <= 5000) ? count($edata["email"]) - $int : 5000;
-
-					$ret = $client->import->csv($setting["newsmanlistid"], array(), $csv);
-
-					$csv = "";
-					$csv = "email,name,source" . PHP_EOL;
+					$this->SetOutput($data);
 				}
-			}*/
 
-			/*$this->restCallParams = str_replace("{{params}}", "?list_id=" . $_POST["list"] . "&segments=" . "&csv_data=" . $csv, $this->restCallParams);
-die($this->restCallParams);
-			$_data = json_decode(file_get_contents($this->restCallParams), true);
-			*/
+				$data["message"] .= PHP_EOL . "Subscribers imported successfully";
+
+				//Subscribers table
+			}
+			//Import
+
 
 			echo "Cron successfully done";
-		}
-		//List Import
-		else{
+		} //List Import
+		else
+		{
 			echo "Incorrect params, follow instructions for cron url";
 		}
 		return $this->load->view('extension/module/newsman', $data);
+	}
+
+	public function getOrders($data = array())
+	{
+		$sql = "SELECT o.order_id, o.email, o.firstname, (SELECT os.name FROM " . DB_PREFIX . "order_status os WHERE os.order_status_id = o.order_status_id AND os.language_id = '" . (int)$this->config->get('config_language_id') . "') AS order_status, o.shipping_code, o.total, o.currency_code, o.currency_value, o.date_added, o.date_modified FROM `" . DB_PREFIX . "order` o";
+
+		if (isset($data['filter_order_status']))
+		{
+			$implode = array();
+
+			$order_statuses = explode(',', $data['filter_order_status']);
+
+			foreach ($order_statuses as $order_status_id)
+			{
+				$implode[] = "o.order_status_id = '" . (int)$order_status_id . "'";
+			}
+
+			if ($implode)
+			{
+				$sql .= " WHERE (" . implode(" OR ", $implode) . ")";
+			}
+		} else
+		{
+			$sql .= " WHERE o.order_status_id > '0'";
+		}
+
+		if (!empty($data['filter_order_id']))
+		{
+			$sql .= " AND o.order_id = '" . (int)$data['filter_order_id'] . "'";
+		}
+
+		if (!empty($data['filter_customer']))
+		{
+			$sql .= " AND CONCAT(o.firstname, ' ', o.lastname) LIKE '%" . $this->db->escape($data['filter_customer']) . "%'";
+		}
+
+		if (!empty($data['filter_date_added']))
+		{
+			$sql .= " AND DATE(o.date_added) = DATE('" . $this->db->escape($data['filter_date_added']) . "')";
+		}
+
+		if (!empty($data['filter_date_modified']))
+		{
+			$sql .= " AND DATE(o.date_modified) = DATE('" . $this->db->escape($data['filter_date_modified']) . "')";
+		}
+
+		if (!empty($data['filter_total']))
+		{
+			$sql .= " AND o.total = '" . (float)$data['filter_total'] . "'";
+		}
+
+		$sort_data = array(
+			'o.order_id',
+			'customer',
+			'order_status',
+			'o.date_added',
+			'o.date_modified',
+			'o.total'
+		);
+
+		if (isset($data['sort']) && in_array($data['sort'], $sort_data))
+		{
+			$sql .= " ORDER BY " . $data['sort'];
+		} else
+		{
+			$sql .= " ORDER BY o.order_id";
+		}
+
+		if (isset($data['order']) && ($data['order'] == 'DESC'))
+		{
+			$sql .= " DESC";
+		} else
+		{
+			$sql .= " ASC";
+		}
+
+		if (isset($data['start']) || isset($data['limit']))
+		{
+			if ($data['start'] < 0)
+			{
+				$data['start'] = 0;
+			}
+
+			if ($data['limit'] < 1)
+			{
+				$data['limit'] = 20;
+			}
+
+			$sql .= " LIMIT " . (int)$data['start'] . "," . (int)$data['limit'];
+		}
+
+		$query = $this->db->query($sql);
+
+		return $query->rows;
 	}
 
 	public function getSubscribers()

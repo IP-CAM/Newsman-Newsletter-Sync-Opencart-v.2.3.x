@@ -36,6 +36,19 @@
                         <input type="submit" name="newsmanSubmitSaveSegment" value="Save Segment" class="btn btn-primary">
                     </div>
                     <div>
+                        <label>Import Type</label>
+                        <select name="type" class="form-control">
+                            <?php if($type == "customers") { ?>
+                            <option selected value="customers">Customers who ordered</option>
+                            <option value="subscribers">Customers subscribers</option>
+                            <?php } else { ?>
+                            <option value="customers">Customers who ordered</option>
+                            <option selected value="subscribers">Customers subscribers</option>
+                            <?php } ?>
+                        </select>
+                        <input type="submit" name="newsmanSubmitSaveType" value="Save Import Type" class="btn btn-primary">
+                    </div>
+                    <div>
                         <input type="submit" name="newsmanSubmitList" value="Import" class="btn btn-primary">
                     </div>
                 </form>
