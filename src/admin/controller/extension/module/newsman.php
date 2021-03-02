@@ -255,7 +255,11 @@ class ControllerExtensionModuleNewsman extends Controller
 		//List Import
 
 		$setting = $this->model_setting_setting->getSetting('newsman');
-		$data["type"] = $setting["newsmantype"];
+
+		$data["type"] = 'subscribers';
+
+		if(!empty($setting["newsmantype"]))		
+			$data["type"] = $setting["newsmantype"];	
 
 		$this->SetOutput($data);
 	}
