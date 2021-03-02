@@ -9,7 +9,7 @@ Generate an API KEY in your [Newsman](https://www.newsmanapp.com) account, insta
 ## Newsman Sync
 
 Manual installation:
-1.  Copy contents of the src folder and paste to your opencart 3 root directory
+1.  Copy contents of the src folder and paste to your opencart 2.3 root directory
 2.  Go to admin->Extensions->Extenstion->Choose the extension type->Modules-> and then install Newsman Newsletter Sync module
 3.  After installation edit the Newsman Newsletter Sync module
 
