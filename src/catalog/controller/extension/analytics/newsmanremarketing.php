@@ -364,6 +364,28 @@ window.onload = function() {
 
  jQuery('#button-cart').click(function(){
 
+	var variationBool = false;
+	var variationCount = false;								
+	
+	$('#product .required input[type=radio]').each(function(element, item) {
+	
+		variationCount = true;
+	
+		if($(this).is(':checked'))
+		{
+			variationBool = true;
+		}
+	
+	});
+	
+		if(variationCount == true)
+		{
+			if(variationBool == false)
+			{		
+				return;
+			}		
+		}
+
  _nzm.run('ec:addProduct', {
 
                     'id': " . $oc_product['product_id'] . ",
@@ -650,8 +672,7 @@ TAG;
 		{
 
 			$purchase_event = null;
-
-
+			$products_event = null;
 
 			if (isset($this->session->data['ga_orderDetails']))
 
@@ -669,6 +690,17 @@ TAG;
 				{
 					foreach ($this->session->data['ga_orderProducts'] as $product)
 						array_push($ob_products, $this->getProduct($order_id, $product));
+				}
+
+				foreach($ob_products as $item){
+					$products_event .= 
+						"_nzm.run( 'ec:addProduct', {" .
+							"'id': '" . $item["id"] . "'," . 
+							"'name': '" . $item["name"] . "'," . 
+							"'category': '" . $item["category"] . "'," . 
+							"'price': '" . $item["price"] . "'," . 
+							"'quantity': '" . $item["quantity"] . "'," . 
+						"} );";
 				}
 
 				$ob_order = [
@@ -710,11 +742,8 @@ TAG;
 
 
 			$tag .= <<<TAG
-
-
-
+$products_event
 _nzm.run('ec:setAction', 'purchase', $purchase_event);
-
 _nzm.run('send', 'pageview');
 
 			</script>
