@@ -19,6 +19,9 @@
                         <label>Api Key</label>
                         <input type="text" name="apikey" placeholder="api key" value="<?php echo $apikey; ?>"
                                class="form-control"/>
+                        <label for="apiallow">Allow API ?</label>
+                        <input type="checkbox" id="apiallow" name="apiallow" <?php echo ($apiallow == 'on') ? 'checked' : ''; ?>
+                               class="form-control"/>
                         <input type="submit" name="newsmanSubmit" value="Save" class="btn btn-primary">
                     </div>
                     <div>

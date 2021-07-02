@@ -18,16 +18,22 @@ class ControllerExtensionmoduleNewsman extends Controller
 
         $cron = (empty($_GET["cron"]) ? "" : $_GET["cron"]);
 
-        //List Import
+        //cron
         if (!empty($cron)) {
+
+            if(empty($setting["newsmanuserid"]) || empty($setting["newsmanapikey"]) || empty($setting["newsmantype"]))
+            {             
+                $this->response->addHeader('Content-Type: application/json');
+                $this->response->setOutput(json_encode("403"));
+                return;
+            }
+
             $this->restCallParams = str_replace("{{userid}}", $setting["newsmanuserid"], $this->restCallParams);
             $this->restCallParams = str_replace("{{apikey}}", $setting["newsmanapikey"], $this->restCallParams);
             $this->restCallParams = str_replace("{{method}}", "import.csv.json", $this->restCallParams);
 
             $client = new Newsman_Client($setting["newsmanuserid"], $setting["newsmanapikey"]);
-
-            $csvdata = array();
-
+         
             $csvcustomers = $this->getCustomers();
 
             $csvdata = $this->getOrders();
@@ -50,7 +56,7 @@ class ControllerExtensionmoduleNewsman extends Controller
             //Import
 
             if ($setting["newsmantype"] == "customers") {
-                //Orders
+                //Customers who ordered
                 $batchSize = 5000;
 
                 $customers_to_import = array();
@@ -131,19 +137,45 @@ class ControllerExtensionmoduleNewsman extends Controller
                     unset($customers_to_import);
 
                 } catch (Exception $ex) {
-
+                    echo "Cron error on customers";
                 }
 
                 //Subscribers table
             }
             //Import
 
-
             echo "Cron successfully done";
-        } //List Import
+        }   
+        //webhooks   
+        elseif(!empty($_GET["webhook"]) && $_GET["webhook"] == true)
+        {
+            $var = file_get_contents('php://input');
+            $newsman_events = json_decode($var);
+            $log = new Log("EDIT.log");
+            $log->write(print_r($newsman_events));
+            foreach($newsman_events as $event)
+            {
+                if($event->type == "spam" || $event->type == "unsub")
+                {
+ 
+                }
+            }
+        }        
         else {
-            $this->newsmanFetchData($setting["newsmanapikey"]);
-        }
+
+            //fetch   
+            if(!empty($_GET["newsman"]))
+            {
+                if(empty($setting["newsmanapiallow"]) || $setting["newsmanapiallow"] != "on")
+                {
+                    $this->response->addHeader('Content-Type: application/json');
+                    $this->response->setOutput(json_encode("403"));
+                    return;
+                }
+
+                $this->newsmanFetchData($setting["newsmanapikey"]);
+            }
+        }      
 
         return $this->load->view('extension/module/newsman', $data);
     }
@@ -152,6 +184,8 @@ class ControllerExtensionmoduleNewsman extends Controller
     {
         $apikey = (empty($_GET["apikey"])) ? "" : $_GET["apikey"];
         $newsman = (empty($_GET["newsman"])) ? "" : $_GET["newsman"];
+        $productId = (empty($_GET["product_id"])) ? "" : $_GET["product_id"];
+        $orderId = (empty($_GET["order_id"])) ? "" : $_GET["order_id"];
 
         if (!empty($newsman) && !empty($apikey)) {
             $apikey = $_GET["apikey"];
@@ -168,20 +202,46 @@ class ControllerExtensionmoduleNewsman extends Controller
 
                     $ordersObj = array();
 
-                    $orders = $this->getOrders();
+                    $this->load->model('catalog/product');
+                    $this->load->model('checkout/order');
+
+                    $orders = $this->getOrders();                    
+                    
+                    if(!empty($orderId))
+                    {
+                        $orders = $this->model_checkout_order->getOrder($orderId);                        
+                        $orders = array(
+                            $orders
+                        );
+                    }                    
 
                     foreach ($orders as $item) {
 
                         $products = $this->getProductsByOrder($item["order_id"]);
                         $productsJson = array();
 
-                        foreach ($products as $prod) {
+                        foreach ($products as $prodOrder) {
+                            
+                            $prod = $this->model_catalog_product->getProduct($prodOrder["product_id"]);
+
+                            $image = "";
+
+                            if(!empty($prod["image"]))
+                            {
+                                $image = explode(".", $prod["image"]);
+                                $image = $image[1];  
+                                $image = str_replace("." . $image, "-500x500" . '.' . $image, $prod["image"]);    
+                                $image = 'https://' . $_SERVER['SERVER_NAME'] . '/image/cache/' . $image;                                
+                            }
 
                             $productsJson[] = array(
-                                "id" => $prod['product_id'],
-                                "name" => $prod['name'],
-                                "quantity" => $prod['quantity'],
-                                "price" => $prod['price']
+                                "id" => $prodOrder['product_id'],
+                                "name" => $prodOrder['name'],
+                                "quantity" => $prodOrder['quantity'],
+                                "price" => $prodOrder['price'],
+                                "price_old" => (empty($prodOrder["special"]) ? "" : $prodOrder["special"]),
+                                "image_url" => $image,
+                                "url" => 'https://' . $_SERVER['SERVER_NAME'] . '/index.php?route=product/product&product_id=' . $prodOrder["product_id"]
                             );
                         }
 
@@ -212,15 +272,45 @@ class ControllerExtensionmoduleNewsman extends Controller
 
                 case "products.json":
 
-                    $products = $this->getProducts();
+                    $this->load->model('catalog/product');
+
+                    $products = $this->model_catalog_product->getProducts();
+
+                    if(!empty($productId))
+                    {
+                        $products = $this->model_catalog_product->getProduct($productId);
+                        $products = array(
+                            $products
+                        );
+                    }
+
                     $productsJson = array();
 
                     foreach ($products as $prod) {
+
+                        $image = "";
+
+                        //price old special becomes price
+                        $price = (!empty($prod["special"])) ? $prod["special"] : $prod["price"];
+                        //price becomes price old
+                        $priceOld = (!empty($prod["special"])) ? $prod["price"] : "";
+
+                        if(!empty($prod["image"]))
+                        {
+                            $image = explode(".", $prod["image"]);
+                            $image = $image[1];  
+                            $image = str_replace("." . $image, "-500x500" . '.' . $image, $prod["image"]);    
+                            $image = 'https://' . $_SERVER['SERVER_NAME'] . '/image/cache/' . $image;                                
+                        }
+
                         $productsJson[] = array(
                             "id" => $prod["product_id"],
-                            "name" => $prod["model"],
+                            "name" => $prod["name"],
                             "stock_quantity" => $prod["quantity"],
-                            "price" => $prod["price"]
+                            "price" => $price,
+                            "price_old" => $priceOld,
+                            "image_url" => $image,
+                            "url" => 'https://' . $_SERVER['SERVER_NAME'] . '/index.php?route=product/product&product_id=' . $prod["product_id"]
                         );
                     }
 
@@ -269,8 +359,7 @@ class ControllerExtensionmoduleNewsman extends Controller
                     break;
             }
         } else {
-            $this->response->addHeader('Content-Type: application/json');
-            $this->response->setOutput(json_encode("403"));
+           //allow
         }
     }
 
@@ -357,15 +446,7 @@ class ControllerExtensionmoduleNewsman extends Controller
         $order_product_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "order_product WHERE order_id = '" . (int)$order_id . "'");
 
         return $order_product_query->rows;
-    }
-
-	public function getProducts()
-	{
-		$order_product_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product");
-
-		return $order_product_query->rows;
-	}
-
+    }	
 
 	public function getSubscribers()
     {
@@ -411,7 +492,7 @@ class ControllerExtensionmoduleNewsman extends Controller
 
     public function _importData(&$data, $list, $segments = null, $client)
     {
-        $csv = '"email","firstname","source"' . PHP_EOL;
+        $csv = '"email","fullname","source"' . PHP_EOL;
 
         $source = self::safeForCsv("opencart 2.3 customers with newsletter newsman plugin");
         foreach ($data as $_dat) {
@@ -522,6 +603,87 @@ class ControllerExtensionmoduleNewsman extends Controller
         $query = $this->db->query($sql);
 
         return $query->rows;
+    }
+
+    //order hooks
+    public function eventAddOrderHistory($route,$data) {        
+      
+        $this->load->model('setting/setting');
+
+        $setting = $this->model_setting_setting->getSetting('newsman');
+        
+        if(empty($setting["newsmanuserid"]) || empty($setting["newsmanlistid"]))
+            return;
+
+        $userId = $setting["newsmanuserid"];
+        $apiKey = $setting["newsmanapikey"];
+        $list = $setting["newsmanlistid"];
+
+        $status = $this->getOrderStatus($data[1]);
+            
+        $url = "https://ssl.newsman.app/api/1.2/rest/" . $userId . "/" . $apiKey . "/remarketing.setPurchaseStatus.json?list_id=" . $list . "&order_id=" . $data[0] . "&status=" . $status;        
+     
+        $cURLConnection = curl_init();
+        curl_setopt($cURLConnection, CURLOPT_URL, $url);
+        curl_setopt($cURLConnection, CURLOPT_RETURNTRANSFER, true);        
+        $ret = curl_exec($cURLConnection);
+        curl_close($cURLConnection);               
+
+    }
+
+    public function getOrderStatus($id){
+        $status = "";
+
+        switch($id)
+        {
+            case 7:
+                $status = "Canceled";
+            break;
+            case 9:
+                $status = "Canceled Reversal";
+            break;
+            case 13:
+                $status = "Chargeback";
+            break;
+            case 5:
+                $status = "Complete";
+            break;
+            case 8:
+                $status = "Denied";
+            break;
+            case 14:
+                $status = "Expired";
+            break;
+            case 10:
+                $status = "Failed";
+            break;
+            case 1:
+                $status = "Pending";
+            break;
+            case 15:
+                $status = "Processed";
+            break;
+            case 2:
+                $status = "Processing";
+            break;
+            case 11:
+                $status = "Refunded";
+            break;
+            case 12:
+                $status = "Reversed";
+            break;
+            case 2:
+                $status = "Processing";
+            break;
+            case 3:
+                $status = "Shipped";
+            break;
+            case 16:
+                $status = "Voided";
+            break;                                                  
+        }
+
+        return $status;
     }
 
 }

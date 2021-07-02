@@ -24,6 +24,7 @@ class ControllerExtensionModuleNewsman extends Controller
 		$data["message"] = "";
 		$data["userid"] = "";
 		$data["apikey"] = "";
+		$data["apiallow"] = "";
 
 		$data["list"] = "<option value=''>Select List</option>";
 
@@ -45,6 +46,7 @@ class ControllerExtensionModuleNewsman extends Controller
 			$settings = $setting;
 			$settings["newsmanuserid"] = $_POST["userid"];
 			$settings["newsmanapikey"] = $_POST["apikey"];
+			$settings["newsmanapiallow"] = (empty($_POST["apiallow"])) ? "" : $_POST["apiallow"];	
 
 			$this->model_setting_setting->editSetting('newsman', $settings);
 
@@ -74,7 +76,34 @@ class ControllerExtensionModuleNewsman extends Controller
 
 			$this->model_setting_setting->editSetting('newsman', $settings);
 
-			$data["message"] = "List is saved";
+			//Set feed on list
+			$this->restCallParams = "https://ssl.newsman.app/api/1.2/rest/{{userid}}/{{apikey}}/{{method}}{{params}}";
+
+			$this->restCallParams = str_replace("{{userid}}", $setting["newsmanuserid"], $this->restCallParams);
+			$this->restCallParams = str_replace("{{apikey}}", $setting["newsmanapikey"], $this->restCallParams);
+			$this->restCallParams = str_replace("{{method}}", "feeds.setFeedOnList.json", $this->restCallParams);
+
+			$client = new Newsman_Client($setting["newsmanuserid"], $setting["newsmanapikey"]);
+
+			$url = 'https://' . $_SERVER['SERVER_NAME'] . "/index.php?route=extension/module/newsman&newsman=products.json&apikey=" . $setting["newsmanapikey"];
+
+			try{
+				$ret = $client->feeds->setFeedOnList($_POST["list"], $url, 'https://' . $_SERVER['SERVER_NAME'], "NewsMAN");	
+			}
+			catch(Exception $ex)
+			{			
+
+			}
+
+			try{
+				$ret = $client->webhook->setListWebhook($_POST["list"], 'https://' . $_SERVER['SERVER_NAME'] . '/index.php?route=extension/module/newsman&webhook=true', array("unsub", "spam"));	
+			}
+			catch(Exception $ex)
+			{			
+	
+			}
+
+			$data["message"] = "List is saved";			
 		}
 
 		if (isset($_POST["newsmanSubmitSaveType"]))
@@ -141,115 +170,96 @@ class ControllerExtensionModuleNewsman extends Controller
 				}
 			}
 
-			//Import
+			 //Import
 
-			if ($setting["newsmantype"] == "customers")
-			{
-				//Customers
-				$batchSize = 5000;
+			 if ($setting["newsmantype"] == "customers") {
+                //Customers who ordered
+                $batchSize = 5000;
 
-				$customers_to_import = array();
+                $customers_to_import = array();
 
-				foreach ($csvdata as $item)
-				{
-					$customers_to_import[] = array(
-						"email" => $item["email"],
-						"firstname" => $item["firstname"]
-					);
+                foreach ($csvdata as $item) {
+                    $customers_to_import[] = array(
+                        "email" => $item["email"],
+                        "firstname" => $item["firstname"]
+                    );
 
-					if ((count($customers_to_import) % $batchSize) == 0)
-					{
-						$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
-					}
-				}
+                    if ((count($customers_to_import) % $batchSize) == 0) {
+                        $this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                    }
+                }
 
-				if (count($customers_to_import) > 0)
-				{
-					$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
-				}
+                if (count($customers_to_import) > 0) {
+                    $this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                }
 
-				unset($customers_to_import);
+                unset($customers_to_import);
 
-				$data["message"] .= PHP_EOL . "Customer who ordered imported successfully";
+            } else {
+                //Customers table
+                try {
+                    $batchSize = 5000;
 
-			} else
-			{
-				//Subscribers table
-				try
-				{
-					$batchSize = 5000;
+                    $customers_to_import = array();
 
-					$customers_to_import = array();
+                    foreach ($csvcustomers as $item) {
+                        if ($item["newsletter"] == 0) {
+                            continue;
+                        }
 
-					foreach ($csvcustomers as $item)
-					{
-						if ($item["newsletter"] == 0)
-						{
-							continue;
-						}
+                        $customers_to_import[] = array(
+                            "email" => $item["email"],
+                            "firstname" => $item["firstname"]
+                        );
 
-						$customers_to_import[] = array(
-							"email" => $item["email"],
-							"firstname" => $item["firstname"]
-						);
+                        if ((count($customers_to_import) % $batchSize) == 0) {
+                            $this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                        }
+                    }
 
-						if ((count($customers_to_import) % $batchSize) == 0)
-						{
-							$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
-						}
-					}
+                    if (count($customers_to_import) > 0) {
+                        $this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                    }
 
-					if (count($customers_to_import) > 0)
-					{
-						$this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
-					}
+                    unset($customers_to_import);
 
-					unset($customers_to_import);
+                    //Subscribers table
+                    $csvdata = $this->getSubscribers();
 
-					$data["message"] .= PHP_EOL . "Customer subscribers imported successfully";
+                    if (empty($csvdata)) {
+                        $data["message"] .= PHP_EOL . "No subscribers in your store";
+                        $this->response->addHeader('Content-Type: application/json');
+                        $this->response->setOutput(json_encode($data["message"]));
+                        return;
+                    }
 
-					$csvdata = $this->getSubscribers();
+                    $batchSize = 5000;
 
-					if (empty($csvdata))
-					{
-						$data["message"] .= PHP_EOL . "No subscribers in your store";
-						$this->SetOutput($data);
-						return;
-					}
+                    $customers_to_import = array();
 
-					$batchSize = 5000;
+                    foreach ($csvdata as $item) {
+                        $customers_to_import[] = array(
+                            "email" => $item["email"]
+                        );
 
-					$customers_to_import = array();
+                        if ((count($customers_to_import) % $batchSize) == 0) {
+                            $this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                        }
+                    }
 
-					foreach ($csvdata as $item)
-					{
-						$customers_to_import[] = array(
-							"email" => $item["email"]
-						);
+                    if (count($customers_to_import) > 0) {
+                        $this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                    }
 
-						if ((count($customers_to_import) % $batchSize) == 0)
-						{
-							$this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
-						}
-					}
+                    unset($customers_to_import);
 
-					if (count($customers_to_import) > 0)
-					{
-						$this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
-					}
+                } catch (Exception $ex) {
 
-					unset($customers_to_import);
+                }
 
-				} catch (Exception $ex)
-				{
-					$this->SetOutput($data);
-				}
-
-				$data["message"] .= PHP_EOL . "Subscribers imported successfully";
-
-				//Subscribers table
-			}
-			//Import
+                //Subscribers table
+            }
+            //Import
 
 		}
 		//List Import
@@ -366,11 +376,16 @@ class ControllerExtensionModuleNewsman extends Controller
 	public
 	function install()
 	{
+		$this->load->model('extension/event');
+        //addOrderHistory
+        $this->model_extension_event->addEvent('newsman','catalog/model/checkout/order/addOrderHistory/after','extension/module/newsman/eventAddOrderHistory');
 	}
 
 	public
 	function uninstall()
 	{
+		$this->load->model('extension/event');
+		$this->model_extension_event->deleteEvent('newsman');
 	}
 
 	public static function safeForCsv($str)
@@ -380,7 +395,7 @@ class ControllerExtensionModuleNewsman extends Controller
 
 	public function _importData(&$data, $list, $segments = null, $client)
 	{
-		$csv = '"email","firstname","source"' . PHP_EOL;
+		$csv = '"email","fullname","source"' . PHP_EOL;
 
 		$source = self::safeForCsv("opencart 2.3 newsman plugin");
 		foreach ($data as $_dat)
@@ -504,9 +519,11 @@ class ControllerExtensionModuleNewsman extends Controller
 				}
 			}
 
-			$data["userid"] = (empty($setting["newsmanuserid"])) ? "" : $setting["newsmanuserid"];
-			$data["apikey"] = (empty($setting["newsmanapikey"])) ? "" : $setting["newsmanapikey"];
 		}
+
+		$data["userid"] = (empty($setting["newsmanuserid"])) ? "" : $setting["newsmanuserid"];
+		$data["apikey"] = (empty($setting["newsmanapikey"])) ? "" : $setting["newsmanapikey"];
+		$data["apiallow"] = (empty($setting["newsmanapiallow"])) ? "" : $setting["newsmanapiallow"];
 
 		$this->response->setOutput($this->load->view('extension/module/newsman', $data));
 	}
