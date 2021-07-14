@@ -360,7 +360,8 @@ TAG;
                     list: 'Product Page'});_nzm.run('ec:setAction', 'detail');
 
 
-window.onload = function() {
+//window.onload = function() {
+document.addEventListener('DOMContentLoaded', function(event) {
 
  jQuery('#button-cart').click(function(){
 
@@ -377,6 +378,21 @@ window.onload = function() {
 		}
 	
 	});
+
+        var _select = $('#product .required select').val();
+	if (_select === undefined)
+{
+
+}
+else{
+		variationCount = true;
+	
+		if(_select != '')
+		{
+			variationBool = true;
+		}	
+
+}
 	
 		if(variationCount == true)
 		{
@@ -410,7 +426,9 @@ window.onload = function() {
 
                     });                 
 
-}
+//}
+
+});
 
                  </script>
 
@@ -428,7 +446,8 @@ window.onload = function() {
 
 					<script>
 
-window.onload = function() {
+//window.onload = function() {
+document.addEventListener('DOMContentLoaded', function(event) {
 
 
 /*jQuery(document).ready(function () {
@@ -466,7 +485,9 @@ window.onload = function() {
 
 });*/
 
-}
+//}
+
+});
 
 					</script>
 
