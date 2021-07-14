@@ -673,6 +673,7 @@ TAG;
 
 			$purchase_event = null;
 			$products_event = null;
+			$email = null;
 
 			if (isset($this->session->data['ga_orderDetails']))
 
@@ -702,6 +703,8 @@ TAG;
 							"'quantity': '" . $item["quantity"] . "'," . 
 						"} );";
 				}
+
+				$email = $orderDetails["email"];
 
 				$ob_order = [
 					"id" => $order_id,
@@ -742,6 +745,7 @@ TAG;
 
 
 			$tag .= <<<TAG
+_nzm.identify({'email': '$email'});
 $products_event
 _nzm.run('ec:setAction', 'purchase', $purchase_event);
 _nzm.run('send', 'pageview');
