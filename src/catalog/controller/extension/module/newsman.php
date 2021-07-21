@@ -148,16 +148,20 @@ class ControllerExtensionmoduleNewsman extends Controller
         }   
         //webhooks   
         elseif(!empty($_GET["webhook"]) && $_GET["webhook"] == true)
-        {
-            $var = file_get_contents('php://input');
-            $newsman_events = json_decode($var);
-            $log = new Log("EDIT.log");
-            $log->write(print_r($newsman_events));
+        {           
+            $var = file_get_contents('php://input');      
+
+            $newsman_events = urldecode($var);   
+            $newsman_events = str_replace("newsman_events=", "", $newsman_events);                     
+            $newsman_events = json_decode($newsman_events, true);
+
             foreach($newsman_events as $event)
-            {
-                if($event->type == "spam" || $event->type == "unsub")
-                {
- 
+            {                  
+                if($event['type'] == "spam" || $event['type'] == "unsub")
+                {                         
+                    $sql = "UPDATE  " . DB_PREFIX . "customer SET `newsletter`='0' WHERE `email`='" . $event["data"]["email"] . "'";
+
+                    $query = $this->db->query($sql);                               
                 }
             }
         }        
@@ -186,6 +190,8 @@ class ControllerExtensionmoduleNewsman extends Controller
         $newsman = (empty($_GET["newsman"])) ? "" : $_GET["newsman"];
         $productId = (empty($_GET["product_id"])) ? "" : $_GET["product_id"];
         $orderId = (empty($_GET["order_id"])) ? "" : $_GET["order_id"];
+        $start = (!empty($_GET["start"]) && $_GET["start"] >= 0) ? $_GET["start"] : 1;
+        $limit = (empty($_GET["limit"])) ? 1000 : $_GET["limit"];
 
         if (!empty($newsman) && !empty($apikey)) {
             $apikey = $_GET["apikey"];
@@ -205,7 +211,7 @@ class ControllerExtensionmoduleNewsman extends Controller
                     $this->load->model('catalog/product');
                     $this->load->model('checkout/order');
 
-                    $orders = $this->getOrders();                    
+                    $orders = $this->getOrders(array("start" => $start, "limit" => $limit));                    
                     
                     if(!empty($orderId))
                     {
@@ -274,7 +280,7 @@ class ControllerExtensionmoduleNewsman extends Controller
 
                     $this->load->model('catalog/product');
 
-                    $products = $this->model_catalog_product->getProducts();
+                    $products = $this->model_catalog_product->getProducts(array("start" => $start, "limit" => $limit));
 
                     if(!empty($productId))
                     {
@@ -627,7 +633,7 @@ class ControllerExtensionmoduleNewsman extends Controller
         curl_setopt($cURLConnection, CURLOPT_URL, $url);
         curl_setopt($cURLConnection, CURLOPT_RETURNTRANSFER, true);        
         $ret = curl_exec($cURLConnection);
-        curl_close($cURLConnection);               
+        curl_close($cURLConnection);              
 
     }
 
