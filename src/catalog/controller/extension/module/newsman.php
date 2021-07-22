@@ -686,7 +686,10 @@ class ControllerExtensionmoduleNewsman extends Controller
             break;
             case 16:
                 $status = "Voided";
-            break;                                                  
+            break;  
+	    default:
+		$status = "New";
+	    break;                                                
         }
 
         return $status;
