@@ -29,7 +29,8 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 		];
 
 		// If form is submitted
-		if ($this->request->server['REQUEST_METHOD'] == 'POST' && $this->validate())
+		//if ($this->request->server['REQUEST_METHOD'] == 'POST')
+		if (isset($_POST["newsmanRemarketingSubmit"]))
 		{
 			$settings = [
 				$this->names['setting'] . '_register' => $this->module_name,
@@ -82,7 +83,8 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=analytics', true);
 
 		// check if form submitted. Load settings posted if we reached this point.
-		if ($this->request->server['REQUEST_METHOD'] == 'POST')
+		//if ($this->request->server['REQUEST_METHOD'] == 'POST')
+		if (isset($_POST["newsmanRemarketingSubmit"]))
 		{
 			$data['newsmanremarketing' . '_status'] = $this->request->post[$this->names['setting'] . '_status'];
 			$data[$this->names['setting'] . '_trackingid'] = $this->request->post[$this->names['setting'] . '_trackingid'];
@@ -118,16 +120,7 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 
 	protected function validate()
 	{
-		if (!$this->user->hasPermission('modify', $this->location['module'] . '/' . $this->module_name))
-		{
-			$this->error['warning'] = $this->language->get('error_permission');
-		}
-		if (!$this->request->post[$this->names['setting'] . '_trackingid'])
-		{
-			$this->error['warning'] = 'Newsman Remarketing code required';
-		}
-
-		return !$this->error;
+        
 	}
 }
 
