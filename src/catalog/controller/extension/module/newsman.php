@@ -144,7 +144,7 @@ class ControllerExtensionmoduleNewsman extends Controller
             }
             //Import
 
-            echo "Cron successfully done";
+            echo "Cron sync successfully done";
         }   
         //webhooks   
         elseif(!empty($_GET["webhook"]) && $_GET["webhook"] == true)
@@ -253,6 +253,8 @@ class ControllerExtensionmoduleNewsman extends Controller
 
                         $ordersObj[] = array(
                             "order_no" => $item["order_id"],
+                            "date" => "",
+                            "status" => "",
                             "lastname" => "",
                             "firstname" => $item["firstname"],
                             "email" => $item["email"],
@@ -328,7 +330,7 @@ class ControllerExtensionmoduleNewsman extends Controller
 
                 case "customers.json":
 
-                    $wp_cust = $this->getCustomers();
+                    $wp_cust = $this->getCustomers(array("start" => $start, "limit" => $limit));
                     $custs = array();
 
                     foreach ($wp_cust as $users) {
@@ -347,7 +349,7 @@ class ControllerExtensionmoduleNewsman extends Controller
 
                 case "subscribers.json":
 
-                    $wp_subscribers = $this->getCustomers(array("filter_newsletter" => 1));
+                    $wp_subscribers = $this->getCustomers(array("start" => $start, "limit" => $limit, "filter_newsletter" => 1));
                     $subs = array();
 
                     foreach ($wp_subscribers as $users) {
@@ -363,6 +365,17 @@ class ControllerExtensionmoduleNewsman extends Controller
                     return;
 
                     break;
+                case "version.json":
+                    $version = array(
+                    "version" => "Opencart 2.3.x"
+                    );
+
+                    $this->response->addHeader('Content-Type: application/json');
+                            $this->response->setOutput(json_encode($version, JSON_PRETTY_PRINT));
+                    return;
+            
+                    break;
+
             }
         } else {
            //allow
@@ -687,9 +700,9 @@ class ControllerExtensionmoduleNewsman extends Controller
             case 16:
                 $status = "Voided";
             break;  
-	    default:
-		$status = "New";
-	    break;                                                
+	        default:
+	        	$status = "New";
+	        break;                                                
         }
 
         return $status;
