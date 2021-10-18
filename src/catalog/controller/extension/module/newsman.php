@@ -529,6 +529,15 @@ class ControllerExtensionmoduleNewsman extends Controller
         return $query->rows;
     }
 
+	public function getSubscribersOcJournal()
+    {
+        $sql = "SELECT * FROM oc_journal3_newsletter";
+
+        $query = $this->db->query($sql);
+
+        return $query->rows;
+    }
+
     public function _importDatas(&$data, $list, $segments = null, $client)
     {
         $csv = '"email","source"' . PHP_EOL;
