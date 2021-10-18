@@ -55,9 +55,11 @@ class ControllerExtensionmoduleNewsman extends Controller
 
             //Import
 
-            if ($setting["newsmantype"] == "customers") {
+            if ($setting["newsmantype"] == "customers") { 
+                
                 //Customers who ordered
-                $batchSize = 5000;
+                
+                $batchSize = 9000;
 
                 $customers_to_import = array();
 
@@ -77,11 +79,13 @@ class ControllerExtensionmoduleNewsman extends Controller
                 }
 
                 unset($customers_to_import);
+                
+                //Customers who ordered
 
             } else {
-                //Customers table
-                try {
-                    $batchSize = 5000;
+                    $batchSize = 9000;
+
+                    //Customers table
 
                     $customers_to_import = array();
 
@@ -105,8 +109,13 @@ class ControllerExtensionmoduleNewsman extends Controller
                     }
 
                     unset($customers_to_import);
+                    
+                    //Customers table
 
                     //Subscribers table
+                    
+                    try{
+                    
                     $csvdata = $this->getSubscribers();
 
                     if (empty($csvdata)) {
@@ -116,7 +125,7 @@ class ControllerExtensionmoduleNewsman extends Controller
                         return;
                     }
 
-                    $batchSize = 5000;
+                    $batchSize = 9000;
 
                     $customers_to_import = array();
 
@@ -135,17 +144,61 @@ class ControllerExtensionmoduleNewsman extends Controller
                     }
 
                     unset($customers_to_import);
+                    
+                    }
+                    catch(Exception $e)
+                    {
+                        echo "\nMissing " . DB_PREFIX . "newsletter table, continuing import without issues";
+                    }
+                    
+                    //Subscribers table
+                    
+                    //OC journal framework table
+                    
+                    try{
+                    
+                    $csvdata = $this->getSubscribersOcJournal();
 
-                } catch (Exception $ex) {
-                    echo "Cron error on customers";
-                }
+                    if (empty($csvdata)) {
+                        $data["message"] .= PHP_EOL . "No subscribers in your store";
+                        $this->response->addHeader('Content-Type: application/json');
+                        $this->response->setOutput(json_encode($data["message"]));
+                        return;
+                    }
 
-                //Subscribers table
+                    $batchSize = 9000;
+
+                    $customers_to_import = array();
+
+                    foreach ($csvdata as $item) {
+                        $customers_to_import[] = array(
+                            "email" => $item["email"]
+                        );
+
+                        if ((count($customers_to_import) % $batchSize) == 0) {
+                            $this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                        }
+                    }
+
+                    if (count($customers_to_import) > 0) {
+                        $this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                    }
+
+                    unset($customers_to_import);
+                    
+                    }
+                    catch(Exception $e)
+                    {
+                        echo "\nMissing oc_journal3_newsletter table, continuing import without issues";
+                    }
+                    
+                    //OC journal framework table
             }
             //Import
 
-            echo "Cron sync successfully done";
-        }   
+            echo "Cron successfully done";
+        }
+        //cron
         //webhooks   
         elseif(!empty($_GET["webhook"]) && $_GET["webhook"] == true)
         {           
