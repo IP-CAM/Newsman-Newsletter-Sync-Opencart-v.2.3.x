@@ -585,11 +585,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
 					$this->load->model('catalog/category');
 
-
-
-					$prod = $this->session->data['ga_orderDetails'];
-
-
+					$prod = (!empty($this->session->data['ga_orderDetails'])) ? $this->session->data['ga_orderDetails'] : array();
 
 					$tag .= "";
 
