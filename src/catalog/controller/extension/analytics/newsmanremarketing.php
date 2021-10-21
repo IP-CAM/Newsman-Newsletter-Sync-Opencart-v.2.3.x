@@ -7,29 +7,19 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 {
 
 	protected function getCategoryPath($category_id)
-
 	{
-
 		$path = '';
 
 		$category = $this->model_catalog_category->getCategory($category_id);
 
-
-
 		if ($category['parent_id'] != 0)
-
 		{
-
 			$path .= $this->getCategoryPath($category['parent_id']) . ' / ';
-
 		}
-
-
 
 		$path .= $category['name'];
 
 		return $path;
-
 	}
 
 
@@ -39,21 +29,13 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 	protected function getProduct($order_id, $product)
 
 	{
-
 		$this->load->model('catalog/product');
-
 		$this->load->model('catalog/category');
-
 		$this->load->model('checkout/order');
-
-
 
 		$oc_product = $this->model_catalog_product->getProduct($product["product_id"]);
 
-
-
 		// get product options
-
 		
 		$product["variant"] = '';
 
@@ -72,8 +54,6 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 
 		}*/
 
-
-
 		// get category path	
 
 		$oc_categories = $this->model_catalog_product->getCategories($product["product_id"]);
@@ -81,34 +61,20 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 		$oc_category = [];
 
 		if (sizeof($oc_categories) > 0)
-
 		{
-
 			$oc_category = $this->model_catalog_category->getCategory($oc_categories[0]["category_id"]);
 
 			if (sizeof($oc_category) > 0)
-
 			{
-
 				$oc_category["path"] = $this->getCategoryPath($oc_category['category_id']);
 
 			} else
-
 			{
-
 				$oc_category["path"] = '';
-
 			}
-
 		}
 
-
-
-
-
 		// $this->log->write(print_r($this->model_checkout_order->getOrderOptions($order_id, $product["order_product_id"]), TRUE));
-
-
 
 		$ga_product = [
 
@@ -131,17 +97,10 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 		];
 
 		return $ga_product;
-
 	}
 
-
-
-
-
 	protected function getShipping($totals)
-
 	{
-
 		$shipping = 0.00;	
 
 	if(!empty($totals))
@@ -173,10 +132,6 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 		return $shipping;
 
 	}
-
-
-
-
 
 	protected function getTax($totals)
 
@@ -215,10 +170,6 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 
 	}
 
-
-
-
-
 	public function index()
 
 	{
@@ -247,8 +198,7 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 
 			$route = (string)$this->request->get['route'];
 
-		}
-
+		}	
 
 
 		// get Tracking ID
@@ -275,7 +225,10 @@ document.getElementsByTagName('head')[0].appendChild(script);
 }
 */
 
-				var _nzm = _nzm || []; var _nzm_config = _nzm_config || []; _nzm_config['disable_datalayer']=1; _nzm_tracking_server = '$endpointHost';
+		let newsmanLoadCartEvents = function(){};
+
+		var _nzmPluginInfo = '1.0:Opencart 2.3.x';
+		var _nzm = _nzm || []; var _nzm_config = _nzm_config || []; _nzm_config['disable_datalayer']=1; _nzm_tracking_server = '$endpointHost';
 
         (function() {var a, methods, i;a = function(f) {return function() {_nzm.push([f].concat(Array.prototype.slice.call(arguments, 0)));
 
@@ -289,15 +242,185 @@ document.getElementsByTagName('head')[0].appendChild(script);
 
         _nzm.run( 'require', 'ec' );
 
+		//remove from cart widget
+		
+		newsmanLoadCartEvents = function()
+		{	
+			$('#cart .table button').each(function(element, item) {			
+		
+				$(this).unbind('click');
+
+				$(this).click(function(){
+
+					var qty = $(this).parent().parent().find('.text-right:first').html();
+					qty = qty.replace("x ", "");
+					
+					var id = $(this).parent().parent().find('.text-left a').attr("href");
+					id = id.split("product_id=");
+					for(const item of id)
+					{
+						if (typeof parseInt(item) === 'number') {
+							id = item;
+						}
+					}
+
+					if (isNaN(id)) {
+						id = 0;
+					}					
+
+					//unsupported event
+					if(id != 0)
+					{
+					_nzm.run("ec:addProduct", {
+						id: id,
+						quantity: qty,
+					  });
+		
+					  _nzm.run("ec:setAction", "remove");
+					  _nzm.run("send", "event", "UX", "click", "remove from cart");
+					}
+					else{
+						console.log("unsupported event, remove from cart widget");
+					}
+
+					setTimeout(function(){
+						newsmanLoadCartEvents();
+					}, 2000);
+
+				});		
+			
+			});
+
+		}
+		
+		setTimeout(function(){
+			newsmanLoadCartEvents();
+		}, 2000);
+
 				</script>
 
 TAG;
 
-
-
 			switch ($route)
 
 			{
+				//home start
+
+				case "":
+
+					$tag .= "
+					<script>
+	var _items = jQuery('.product-layout');
+
+					for (var x = 0; x <= _items.length; x++) {				
+						
+						$('.product-layout:eq(' + x + ') .btn-cart').on('click',function () {
+								
+							var _c = $(this).closest('.product-layout');
+
+							var id = _c.find('.button-group a').last().attr('onclick');
+							id = id.split('\'');	
+							id = id[1];					
+
+							var name = _c.find('.caption .name').text();
+							name = $.trim(name);						
+
+							var category = '';
+							var price = _c
+								.find('.caption .price .price-new')
+								.text();
+                            								
+                            if(price == '' || price == undefined)
+                                price = _c
+								.find('.caption .price .price-normal')
+								.text();
+								
+							price = price.trim();
+							price = price.split(' ').join('');
+							price = price.split(',').join('.');
+							price = price.split('Lei').join('');							
+							price = price.split('lei').join('');															
+					
+							_nzm.run('ec:addProduct', {
+								id: id,
+								name: name,
+								category: category,
+								price: price,
+								quantity: '1',
+							});
+							_nzm.run('ec:setAction', 'add');
+							_nzm.run('send', 'event', 'UX', 'click', 'add to cart');
+
+							setTimeout(function(){
+								newsmanLoadCartEvents();
+							}, 2000);
+							
+						});
+
+					}
+					</script>
+					";
+
+					break;
+
+				case "common/home":
+					
+					$tag .= "
+					<script>
+	var _items = jQuery('.product-layout');
+
+					for (var x = 0; x <= _items.length; x++) {				
+						
+						$('.product-layout:eq(' + x + ') .btn-cart').on('click',function () {
+								
+							var _c = $(this).closest('.product-layout');
+
+							var id = _c.find('.button-group a').last().attr('onclick');
+							id = id.split('\'');	
+							id = id[1];					
+
+							var name = _c.find('.caption .name').text();
+							name = $.trim(name);						
+
+							var category = '';
+							var price = _c
+								.find('.caption .price .price-new')
+								.text();
+                            								
+                            if(price == '' || price == undefined)
+                                price = _c
+								.find('.caption .price .price-normal')
+								.text();
+								
+							price = price.trim();
+							price = price.split(' ').join('');
+							price = price.split(',').join('.');
+							price = price.split('Lei').join('');							
+							price = price.split('lei').join('');															
+					
+							_nzm.run('ec:addProduct', {
+								id: id,
+								name: name,
+								category: category,
+								price: price,
+								quantity: '1',
+							});
+							_nzm.run('ec:setAction', 'add');
+							_nzm.run('send', 'event', 'UX', 'click', 'add to cart');
+
+							setTimeout(function(){
+								newsmanLoadCartEvents();
+							}, 2000);
+							
+						});
+
+					}
+					</script>
+					";
+
+					break;
+
+					//home end
 
 				case "product/product":
 
@@ -347,7 +470,7 @@ TAG;
 
 					<script>
 
- _nzm.run('ec:addProduct', {
+					 _nzm.run('ec:addProduct', {
 
                     'id': " . $oc_product['product_id'] . ",
 
@@ -357,7 +480,8 @@ TAG;
 
                     price: " . $oc_product['price'] . ",
 
-                    list: 'Product Page'});_nzm.run('ec:setAction', 'detail');
+                    list: 'Product Page'});
+					_nzm.run('ec:setAction', 'detail');
 
 
 //window.onload = function() {
@@ -379,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	
 	});
 
-        var _select = $('#product .required select').val();
+    var _select = $('#product .required select').val();
 	if (_select === undefined)
 {
 
@@ -391,7 +515,6 @@ else{
 		{
 			variationBool = true;
 		}	
-
 }
 	
 		if(variationCount == true)
@@ -402,7 +525,25 @@ else{
 			}		
 		}
 
- _nzm.run('ec:addProduct', {
+		var _classQty = '';
+		var validate = jQuery('#input-quantity').val();
+
+		if(validate != '' && validate != undefined)
+		{
+			_classQty = '#input-quantity';
+		}
+	
+		if(validate == '' || validate == undefined)
+		{
+			validate = jQuery('#product-quantity').val();
+		
+			if(validate != '')
+			{
+				_classQty = '#product-quantity';
+			}
+		}
+		
+					_nzm.run('ec:addProduct', {
 
                     'id': " . $oc_product['product_id'] . ",
 
@@ -412,16 +553,18 @@ else{
 
                     price: " . $oc_product['price'] . ",
 
-                    quantity: $('#input-quantity').val()
+                    quantity: $(_classQty).val()
 
                     });
-
 
 
                     _nzm.run('ec:setAction', 'add');
 
                     _nzm.run('send', 'event', 'UX', 'click', 'add to cart');
 
+					setTimeout(function(){
+						newsmanLoadCartEvents();
+					}, 2000);
 
 
                     });                 
@@ -496,8 +639,6 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
 
 					break;
-
-
 
 				case "checkout/checkout":
 
@@ -585,7 +726,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
 					$this->load->model('catalog/category');
 
+
+
 					$prod = (!empty($this->session->data['ga_orderDetails'])) ? $this->session->data['ga_orderDetails'] : array();
+
+
 
 					$tag .= "";
 
@@ -593,8 +738,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
 					$pos = 1;
 
+					//start script
+					$tag .= "
 
-
+					<script>";
+					
 					foreach ($prod as $item)
 
 					{
@@ -628,9 +776,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 						$price = str_replace(',', '.', $item["price"]);
 						$price = str_replace('Lei', '', $price);
 
-						$tag .= "
-
-					<script>
+						$tag .= "				
 
  _nzm.run('ec:addImpression', {
 
@@ -646,15 +792,71 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
                     position: '" . $pos . "'
 
-                    });
-
-					</script>";
+                    });";
 
 
 
 						$pos++;
 
 					}
+
+					//end script
+					$tag .= "
+
+					//setTimeout(function(){
+
+					var _items = jQuery('.product-layout');
+
+					for (var x = 0; x <= _items.length; x++) {				
+						
+						$('.product-layout:eq(' + x + ') .btn-cart').on('click',function () {
+								
+							var _c = $(this).closest('.product-layout');
+
+							var id = _c.find('.button-group a').last().attr('onclick');
+							id = id.split('\'');	
+							id = id[1];					
+
+							var name = _c.find('.caption .name').text();
+							name = $.trim(name);						
+
+							var category = '';
+							var price = _c
+								.find('.caption .price .price-new')
+								.text();
+                            								
+                            if(price == '' || price == undefined)
+                                price = _c
+								.find('.caption .price .price-normal')
+								.text();
+								
+							price = price.trim();
+							price = price.split(' ').join('');
+							price = price.split(',').join('.');
+							price = price.split('Lei').join('');							
+							price = price.split('lei').join('');															
+					
+							_nzm.run('ec:addProduct', {
+								id: id,
+								name: name,
+								category: category,
+								price: price,
+								quantity: '1',
+							});
+							_nzm.run('ec:setAction', 'add');
+							_nzm.run('send', 'event', 'UX', 'click', 'add to cart');
+
+							setTimeout(function(){
+								newsmanLoadCartEvents();
+							}, 2000);
+							
+						});
+
+					}
+
+				//}, 1500);
+
+					</script>";
 
 
 
@@ -741,6 +943,7 @@ TAG;
 
 					<script>
 
+			    var _nzmPluginInfo = '1.0:Opencart 2.3.x';
 				var _nzm = _nzm || []; var _nzm_config = _nzm_config || []; _nzm_config['disable_datalayer']=1; _nzm_tracking_server = '$endpointHost';
 
         (function() {var a, methods, i;a = function(f) {return function() {_nzm.push([f].concat(Array.prototype.slice.call(arguments, 0)));
