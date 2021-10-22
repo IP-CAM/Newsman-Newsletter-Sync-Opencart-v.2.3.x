@@ -310,7 +310,9 @@ TAG;
 
 					$tag .= "
 					<script>
-	var _items = jQuery('.product-layout');
+setTimeout(function()
+{
+	var _items = $('.product-layout');
 
 					for (var x = 0; x <= _items.length; x++) {				
 						
@@ -320,8 +322,8 @@ TAG;
 
 							var id = _c.find('.button-group a').last().attr('onclick');
 							id = id.split('\'');	
-							id = id[1];					
-
+							id = id[1];	
+				
 							var name = _c.find('.caption .name').text();
 							name = $.trim(name);						
 
@@ -358,6 +360,9 @@ TAG;
 						});
 
 					}
+
+}, 1500);
+
 					</script>
 					";
 
@@ -366,8 +371,11 @@ TAG;
 				case "common/home":
 					
 					$tag .= "
+
 					<script>
-	var _items = jQuery('.product-layout');
+setTimeout(function()
+{
+	var _items = $('.product-layout');
 
 					for (var x = 0; x <= _items.length; x++) {				
 						
@@ -377,8 +385,8 @@ TAG;
 
 							var id = _c.find('.button-group a').last().attr('onclick');
 							id = id.split('\'');	
-							id = id[1];					
-
+							id = id[1];	
+				
 							var name = _c.find('.caption .name').text();
 							name = $.trim(name);						
 
@@ -415,7 +423,11 @@ TAG;
 						});
 
 					}
+
+}, 1500);
+
 					</script>
+
 					";
 
 					break;
@@ -803,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 					//end script
 					$tag .= "
 
-					//setTimeout(function(){
+					setTimeout(function(){
 
 					var _items = jQuery('.product-layout');
 
@@ -854,7 +866,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
 					}
 
-				//}, 1500);
+				}, 1500);
 
 					</script>";
 
