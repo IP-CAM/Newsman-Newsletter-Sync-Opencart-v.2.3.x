@@ -245,6 +245,7 @@ class ControllerExtensionmoduleNewsman extends Controller
         $orderId = (empty($_GET["order_id"])) ? "" : $_GET["order_id"];
         $start = (!empty($_GET["start"]) && $_GET["start"] >= 0) ? $_GET["start"] : 1;
         $limit = (empty($_GET["limit"])) ? 1000 : $_GET["limit"];
+	$imgWH = (empty($_GET["imgWH"])) ? "-500x500" : . "-" . $_GET["imgWH"];
 
         if (!empty($newsman) && !empty($apikey)) {
             $apikey = $_GET["apikey"];
@@ -289,7 +290,7 @@ class ControllerExtensionmoduleNewsman extends Controller
                             {
                                 $image = explode(".", $prod["image"]);
                                 $image = $image[1];  
-                                $image = str_replace("." . $image, "-500x500" . '.' . $image, $prod["image"]);    
+                                $image = str_replace("." . $image, $imgWH . '.' . $image, $prod["image"]);    
                                 $image = 'https://' . $_SERVER['SERVER_NAME'] . '/image/cache/' . $image;                                
                             }
 
@@ -360,7 +361,7 @@ class ControllerExtensionmoduleNewsman extends Controller
                         {
                             $image = explode(".", $prod["image"]);
                             $image = $image[1];  
-                            $image = str_replace("." . $image, "-500x500" . '.' . $image, $prod["image"]);    
+                            $image = str_replace("." . $image, $imgWH . '.' . $image, $prod["image"]);    
                             $image = 'https://' . $_SERVER['SERVER_NAME'] . '/image/cache/' . $image;                                
                         }
 
