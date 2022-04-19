@@ -217,7 +217,11 @@ class ControllerExtensionmoduleNewsman extends Controller
                     $query = $this->db->query($sql);                               
                 }
             }
-        }        
+        }       
+        elseif(!empty($_GET["newsman"]) && $_GET["newsman"] == "getCart.json")
+        {
+            $this->getCart();
+        } 
         else {
 
             //fetch   
@@ -237,6 +241,26 @@ class ControllerExtensionmoduleNewsman extends Controller
         return $this->load->view('extension/module/newsman', $data);
     }
 
+    public function getCart(){
+        $prod = array();
+        $cart = $this->cart->getProducts();
+        
+        foreach ( $cart as $cart_item_key => $cart_item ) {
+
+            $prod[] = array(
+                "id" => $cart_item['product_id'],
+                "name" => $cart_item["name"],
+                "price" => $cart_item["price"],						
+                "quantity" => $cart_item['quantity']
+            );							
+                                    
+         }
+        
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($prod, JSON_PRETTY_PRINT));
+        return;
+    }
+
     public function newsmanFetchData($_apikey)
     {
         $apikey = (empty($_GET["apikey"])) ? "" : $_GET["apikey"];
@@ -245,7 +269,7 @@ class ControllerExtensionmoduleNewsman extends Controller
         $orderId = (empty($_GET["order_id"])) ? "" : $_GET["order_id"];
         $start = (!empty($_GET["start"]) && $_GET["start"] >= 0) ? $_GET["start"] : 1;
         $limit = (empty($_GET["limit"])) ? 1000 : $_GET["limit"];
-	$imgWH = (empty($_GET["imgWH"])) ? "-500x500" : . "-" . $_GET["imgWH"];
+	    $imgWH = (empty($_GET["imgWH"])) ? "-500x500" : "-" . $_GET["imgWH"];
 
         if (!empty($newsman) && !empty($apikey)) {
             $apikey = $_GET["apikey"];

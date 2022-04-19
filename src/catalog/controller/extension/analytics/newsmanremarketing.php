@@ -215,89 +215,170 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 
 			$tag .= <<<TAG
 
-				<script>
-/*if jquery is mandatory
-if (typeof jQuery == 'undefined') {
-var script = document.createElement('script');
-script.src = 'https://code.jquery.com/jquery-3.4.1.min.js';
-script.type = 'text/javascript';
-document.getElementsByTagName('head')[0].appendChild(script);
-}
-*/
-
-		let newsmanLoadCartEvents = function(){};
+		<script>
 
 		var _nzmPluginInfo = '1.0:Opencart 2.3.x';
-		var _nzm = _nzm || []; var _nzm_config = _nzm_config || []; _nzm_config['disable_datalayer']=1; _nzm_tracking_server = '$endpointHost';
+		var _nzm = _nzm || []; 
+		var _nzm_config = _nzm_config || []; 
+		_nzm_config['disable_datalayer'] = 1; 
+		_nzm_tracking_server = '$endpointHost';
 
         (function() {var a, methods, i;a = function(f) {return function() {_nzm.push([f].concat(Array.prototype.slice.call(arguments, 0)));
-
         }};methods = ['identify', 'track', 'run'];for(i = 0; i < methods.length; i++) {_nzm[methods[i]] = a(methods[i])};
-
         s = document.getElementsByTagName('script')[0];var script_dom = document.createElement('script');script_dom.async = true;
-
         script_dom.id = 'nzm-tracker';script_dom.setAttribute('data-site-id', '$tracking_id');
-
         script_dom.src = '$endpoint';s.parentNode.insertBefore(script_dom, s);})();       
 
         _nzm.run( 'require', 'ec' );
 
-		//remove from cart widget
-		
-		newsmanLoadCartEvents = function()
-		{	
-			$('#cart .table button').each(function(element, item) {			
-		
-				$(this).unbind('click');
+		var isProd = true;
 
-				$(this).click(function(){
+		let lastCart = sessionStorage.getItem('lastCart');			
+		if(lastCart === null)
+			lastCart = {};			
 
-					var qty = $(this).parent().parent().find('.text-right:first').html();
-					qty = qty.replace("x ", "");
+		var lastCartFlag = false;
+		var bufferedClick = false;
+		var firstLoad = true;
+		var bufferedXHR = false;
+		var ajaxurl = '/index.php?route=extension/module/newsman&newsman=getCart.json';	
 					
-					var id = $(this).parent().parent().find('.text-left a').attr("href");
-					id = id.split("product_id=");
-					for(const item of id)
-					{
-						if (typeof parseInt(item) === 'number') {
-							id = item;
+		NewsmanAutoEvents();
+		setInterval(NewsmanAutoEvents, 5000);		
+
+		detectXHR();
+
+		function NewsmanAutoEvents(){							
+
+			if(bufferedXHR || firstLoad)
+			{
+
+				jQuery.post(ajaxurl, {  
+				post: true,
+				}, function (response) {				
+
+					lastCart = JSON.parse(sessionStorage.getItem('lastCart'));						
+
+					if(lastCart === null)
+						lastCart = {};	
+
+					//check cache
+					if(lastCart.length > 0 && lastCart != null && lastCart != undefined && response.length > 0 && response != null && response != undefined)
+					{				
+						if(JSON.stringify(lastCart) === JSON.stringify(response))
+						{
+							if(!isProd)
+								console.log('newsman remarketing: cache loaded, cart is unchanged');
+
+							lastCartFlag = true;					
 						}
-					}
+						else{
+							lastCartFlag = false;
+						}
+					}			
 
-					if (isNaN(id)) {
-						id = 0;
-					}					
-
-					//unsupported event
-					if(id != 0)
+					if(response.length > 0 && lastCartFlag == false)
 					{
-					_nzm.run("ec:addProduct", {
-						id: id,
-						quantity: qty,
-					  });
-		
-					  _nzm.run("ec:setAction", "remove");
-					  _nzm.run("send", "event", "UX", "click", "remove from cart");
+						
+						_nzm.run('ec:setAction', 'clear_cart');										
+						_nzm.run( 'send', 'event', 'detail view', 'click', 'clearCart', null, _nzm.createFunctionWithTimeout(function() {												
+
+							for (var item in response) {				
+
+								_nzm.run( 'ec:addProduct', 
+									response[item]
+								);				
+	
+							}	
+
+							_nzm.run( 'ec:setAction', 'add' );
+							_nzm.run( 'send', 'event', 'UX', 'click', 'add to cart' );
+
+							sessionStorage.setItem('lastCart', JSON.stringify(response));					
+
+							if(!isProd)
+								console.log('newsman remarketing: cart sent');
+
+						}));										
+
 					}
 					else{
-						console.log("unsupported event, remove from cart widget");
+
+						if(!isProd)
+							console.log('newsman remarketing: request not sent');
+
 					}
 
-					setTimeout(function(){
-						newsmanLoadCartEvents();
-					}, 2000);
+					firstLoad = false;				
+					bufferedXHR = false;
+					
+				});
 
-				});		
-			
-			});
+			}
 
 		}
-		
-		setTimeout(function(){
-			newsmanLoadCartEvents();
-		}, 2000);
 
-				</script>
+		function detectXHR() {	
+			
+			var proxied = window.XMLHttpRequest.prototype.send;
+			window.XMLHttpRequest.prototype.send = function() {		
+
+				var pointer = this;
+				var validate = true;
+				var intervalId = window.setInterval(function(){
+
+						if(pointer.readyState != 4){
+								return;
+						}
+						
+						var _location = pointer.getResponseHeader('access-control-allow-origin');				
+
+						if(pointer.responseURL.indexOf('getCart.json') >= 0)
+						{							
+							validate = false;												
+						}
+						else{
+							validate = true;
+						}
+
+						if(validate && !_location || _location == window.location.origin)
+						{
+							bufferedXHR = true;
+
+							if(!isProd)
+								console.log('newsman remarketing: ajax request fired and catched from same domain');
+
+							NewsmanAutoEvents();
+						}
+			
+						clearInterval(intervalId);
+		
+				}, 1);
+
+				return proxied.apply(this, [].slice.call(arguments));
+			};	
+
+		}
+
+		function BufferClick(){
+
+			window.onclick = function (e) {
+				const origin = ['a', 'input', 'span', 'i', 'button'];
+	
+				var click = e.target.localName;			
+
+				if(!isProd)
+					console.log('newsman remarketing element clicked: ' + click);
+
+				for (const element of origin) {
+					if(click == element)
+						bufferedClick = true;
+				}
+			}
+
+		}
+
+		</script>
 
 TAG;
 
@@ -309,61 +390,6 @@ TAG;
 				case "":
 
 					$tag .= "
-					<script>
-setTimeout(function()
-{
-	var _items = $('.product-layout');
-
-					for (var x = 0; x <= _items.length; x++) {				
-						
-						$('.product-layout:eq(' + x + ') .btn-cart').on('click',function () {
-								
-							var _c = $(this).closest('.product-layout');
-
-							var id = _c.find('.button-group a').last().attr('onclick');
-							id = id.split('\'');	
-							id = id[1];	
-				
-							var name = _c.find('.caption .name').text();
-							name = $.trim(name);						
-
-							var category = '';
-							var price = _c
-								.find('.caption .price .price-new')
-								.text();
-                            								
-                            if(price == '' || price == undefined)
-                                price = _c
-								.find('.caption .price .price-normal')
-								.text();
-								
-							price = price.trim();
-							price = price.split(' ').join('');
-							price = price.split(',').join('.');
-							price = price.split('Lei').join('');							
-							price = price.split('lei').join('');															
-					
-							_nzm.run('ec:addProduct', {
-								id: id,
-								name: name,
-								category: category,
-								price: price,
-								quantity: '1',
-							});
-							_nzm.run('ec:setAction', 'add');
-							_nzm.run('send', 'event', 'UX', 'click', 'add to cart');
-
-							setTimeout(function(){
-								newsmanLoadCartEvents();
-							}, 2000);
-							
-						});
-
-					}
-
-}, 1500);
-
-					</script>
 					";
 
 					break;
@@ -371,63 +397,6 @@ setTimeout(function()
 				case "common/home":
 					
 					$tag .= "
-
-					<script>
-setTimeout(function()
-{
-	var _items = $('.product-layout');
-
-					for (var x = 0; x <= _items.length; x++) {				
-						
-						$('.product-layout:eq(' + x + ') .btn-cart').on('click',function () {
-								
-							var _c = $(this).closest('.product-layout');
-
-							var id = _c.find('.button-group a').last().attr('onclick');
-							id = id.split('\'');	
-							id = id[1];	
-				
-							var name = _c.find('.caption .name').text();
-							name = $.trim(name);						
-
-							var category = '';
-							var price = _c
-								.find('.caption .price .price-new')
-								.text();
-                            								
-                            if(price == '' || price == undefined)
-                                price = _c
-								.find('.caption .price .price-normal')
-								.text();
-								
-							price = price.trim();
-							price = price.split(' ').join('');
-							price = price.split(',').join('.');
-							price = price.split('Lei').join('');							
-							price = price.split('lei').join('');															
-					
-							_nzm.run('ec:addProduct', {
-								id: id,
-								name: name,
-								category: category,
-								price: price,
-								quantity: '1',
-							});
-							_nzm.run('ec:setAction', 'add');
-							_nzm.run('send', 'event', 'UX', 'click', 'add to cart');
-
-							setTimeout(function(){
-								newsmanLoadCartEvents();
-							}, 2000);
-							
-						});
-
-					}
-
-}, 1500);
-
-					</script>
-
 					";
 
 					break;
@@ -442,11 +411,7 @@ setTimeout(function()
 
 					$this->load->model('checkout/order');
 
-
-
 					$id = $this->request->get['product_id'];
-
-
 
 					$oc_product = $this->model_catalog_product->getProduct($id);
 
@@ -476,257 +441,40 @@ setTimeout(function()
 
 					}
 
-
-
 					$tag .= "
 
 					<script>
 
-					 _nzm.run('ec:addProduct', {
+						_nzm.run('ec:addProduct', {
 
-                    'id': " . $oc_product['product_id'] . ",
+						'id': " . $oc_product['product_id'] . ",
 
-                    'name': '" . $oc_product['name'] . "',
+						'name': '" . $oc_product['name'] . "',
 
-                    'category': '" . $oc_category['path'] . "',
+						'category': '" . $oc_category['path'] . "',
 
-                    price: " . $oc_product['price'] . ",
+						price: " . $oc_product['price'] . ",
 
-                    list: 'Product Page'});
-					_nzm.run('ec:setAction', 'detail');
+						list: 'Product Page'});
+						_nzm.run('ec:setAction', 'detail');
 
-
-//window.onload = function() {
-document.addEventListener('DOMContentLoaded', function(event) {
-
- jQuery('#button-cart').click(function(){
-
-	var variationBool = false;
-	var variationCount = false;								
-	
-	$('#product .required input[type=radio]').each(function(element, item) {
-	
-		variationCount = true;
-	
-		if($(this).is(':checked'))
-		{
-			variationBool = true;
-		}
-	
-	});
-
-    var _select = $('#product .required select').val();
-	if (_select === undefined)
-{
-
-}
-else{
-		variationCount = true;
-	
-		if(_select != '')
-		{
-			variationBool = true;
-		}	
-}
-	
-		if(variationCount == true)
-		{
-			if(variationBool == false)
-			{		
-				return;
-			}		
-		}
-
-		var _classQty = '';
-		var validate = jQuery('#input-quantity').val();
-
-		if(validate != '' && validate != undefined)
-		{
-			_classQty = '#input-quantity';
-		}
-	
-		if(validate == '' || validate == undefined)
-		{
-			validate = jQuery('#product-quantity').val();
-		
-			if(validate != '')
-			{
-				_classQty = '#product-quantity';
-			}
-		}
-		
-					_nzm.run('ec:addProduct', {
-
-                    'id': " . $oc_product['product_id'] . ",
-
-                    'name': '" . $oc_product['name'] . "',
-
-                    'category': '" . $oc_category['path'] . "',
-
-                    price: " . $oc_product['price'] . ",
-
-                    quantity: $(_classQty).val()
-
-                    });
-
-
-                    _nzm.run('ec:setAction', 'add');
-
-                    _nzm.run('send', 'event', 'UX', 'click', 'add to cart');
-
-					setTimeout(function(){
-						newsmanLoadCartEvents();
-					}, 2000);
-
-
-                    });                 
-
-//}
-
-});
-
-                 </script>
+                 	</script>
 
                  ";
 
 					break;
 
-
-
 				case "checkout/cart":
 
-
-
 					$tag .= "
-
-					<script>
-
-//window.onload = function() {
-document.addEventListener('DOMContentLoaded', function(event) {
-
-
-/*jQuery(document).ready(function () {
-
-
-	$(\".cart_quantity_delete\").each(function () {
-
-    	jQuery(this).bind(\"click\", {\"elem\": jQuery(this)}, function (ev) {
-
-            var _c = $(this).closest('.cart_item');
-
-            var id = ev.data.elem.attr('id');
-
-            id = id.substr(0, id.indexOf('_'));
-
-            var qty = _c.find('.cart_quantity_input').val();
-
-
-
-            _nzm.run('ec:addProduct', {
-
-                'id': id,
-
-                'quantity': qty
-
-            });
-
-            _nzm.run('ec:setAction', 'remove');
-
-            _nzm.run('send', 'event', 'UX', 'click', 'remove from cart');
-
-		});
-
-    });
-
-});*/
-
-//}
-
-});
-
-					</script>
-
 					";
-
-
 
 					break;
 
 				case "checkout/checkout":
 
-					$this->load->model('catalog/product');
-
-					$this->load->model('catalog/category');
-
-					$this->load->model('checkout/order');
-
-
-
-					$products = $this->cart->getProducts();
-
-
-
-					foreach ($products as $item)
-
-					{
-
-						$oc_categories = $this->model_catalog_product->getCategories($item["product_id"]);
-
-						$oc_category = [];
-
-						if (sizeof($oc_categories) > 0)
-
-						{
-
-							$oc_category = $this->model_catalog_category->getCategory($oc_categories[0]["category_id"]);
-
-							if (sizeof($oc_category) > 0)
-
-							{
-
-								$oc_category["path"] = $this->getCategoryPath($oc_category['category_id']);
-
-							} else
-
-							{
-
-								$oc_category["path"] = '';
-
-							}
-
-						}
-
-
-
-						$tag .= "
-
-					<script>
-
- _nzm.run('ec:addProduct', {
-
-                    'id': " . $item['product_id'] . ",
-
-                    'name': '" . $item['name'] . "',
-
-                    'category': '" . $oc_category['path'] . "',
-
-                    price: " . $item['price'] . ",
-
-                    quantity: '" . $item['quantity'] . "'
-
-                    });
-
-					</script>";
-
-					}
-
-
-
-					$tag .= "<script>
-
-    _nzm.run('ec:setAction', 'checkout');
-
-</script>";
+					$tag .= "
+					";
 
 					break;
 
@@ -790,7 +538,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
 						$tag .= "				
 
- _nzm.run('ec:addImpression', {
+					 _nzm.run('ec:addImpression', {
 
                     'id': " . $item['product_id'] . ",
 
@@ -806,71 +554,13 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
                     });";
 
-
-
-						$pos++;
+					$pos++;
 
 					}
 
 					//end script
 					$tag .= "
-
-					setTimeout(function(){
-
-					var _items = jQuery('.product-layout');
-
-					for (var x = 0; x <= _items.length; x++) {				
-						
-						$('.product-layout:eq(' + x + ') .btn-cart').on('click',function () {
-								
-							var _c = $(this).closest('.product-layout');
-
-							var id = _c.find('.button-group a').last().attr('onclick');
-							id = id.split('\'');	
-							id = id[1];					
-
-							var name = _c.find('.caption .name').text();
-							name = $.trim(name);						
-
-							var category = '';
-							var price = _c
-								.find('.caption .price .price-new')
-								.text();
-                            								
-                            if(price == '' || price == undefined)
-                                price = _c
-								.find('.caption .price .price-normal')
-								.text();
-								
-							price = price.trim();
-							price = price.split(' ').join('');
-							price = price.split(',').join('.');
-							price = price.split('Lei').join('');							
-							price = price.split('lei').join('');															
-					
-							_nzm.run('ec:addProduct', {
-								id: id,
-								name: name,
-								category: category,
-								price: price,
-								quantity: '1',
-							});
-							_nzm.run('ec:setAction', 'add');
-							_nzm.run('send', 'event', 'UX', 'click', 'add to cart');
-
-							setTimeout(function(){
-								newsmanLoadCartEvents();
-							}, 2000);
-							
-						});
-
-					}
-
-				}, 1500);
-
 					</script>";
-
-
 
 					break;
 
@@ -880,19 +570,13 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
 			$tag .= <<<TAG
 
-
-
 <script>
 
 _nzm.run('send', 'pageview');
 
 </script>
 
-
-
 TAG;
-
-
 
 			return $tag;
 
@@ -951,25 +635,169 @@ TAG;
 
 			$tag = <<<TAG
 
-
-
 					<script>
 
-			    var _nzmPluginInfo = '1.0:Opencart 2.3.x';
-				var _nzm = _nzm || []; var _nzm_config = _nzm_config || []; _nzm_config['disable_datalayer']=1; _nzm_tracking_server = '$endpointHost';
-
-        (function() {var a, methods, i;a = function(f) {return function() {_nzm.push([f].concat(Array.prototype.slice.call(arguments, 0)));
-
-        }};methods = ['identify', 'track', 'run'];for(i = 0; i < methods.length; i++) {_nzm[methods[i]] = a(methods[i])};
-
-        s = document.getElementsByTagName('script')[0];var script_dom = document.createElement('script');script_dom.async = true;
-
-        script_dom.id = 'nzm-tracker';script_dom.setAttribute('data-site-id', '$tracking_id');
-
-        script_dom.src = '$endpoint';s.parentNode.insertBefore(script_dom, s);})();    
-
-        _nzm.run( 'require', 'ec' );
-
+			 
+					var _nzmPluginInfo = '1.0:Opencart 2.3.x';
+					var _nzm = _nzm || []; 
+					var _nzm_config = _nzm_config || []; 
+					_nzm_config['disable_datalayer'] = 1; 
+					_nzm_tracking_server = '$endpointHost';
+			
+					(function() {var a, methods, i;a = function(f) {return function() {_nzm.push([f].concat(Array.prototype.slice.call(arguments, 0)));
+					}};methods = ['identify', 'track', 'run'];for(i = 0; i < methods.length; i++) {_nzm[methods[i]] = a(methods[i])};
+					s = document.getElementsByTagName('script')[0];var script_dom = document.createElement('script');script_dom.async = true;
+					script_dom.id = 'nzm-tracker';script_dom.setAttribute('data-site-id', '$tracking_id');
+					script_dom.src = '$endpoint';s.parentNode.insertBefore(script_dom, s);})();       
+			
+					_nzm.run( 'require', 'ec' );
+			
+					var isProd = true;
+			
+					let lastCart = sessionStorage.getItem('lastCart');			
+					if(lastCart === null)
+						lastCart = {};			
+			
+					var lastCartFlag = false;
+					var bufferedClick = false;
+					var firstLoad = true;
+					var bufferedXHR = false;
+					var ajaxurl = '/index.php?route=extension/module/newsman&newsman=getCart.json';	
+								
+					NewsmanAutoEvents();
+					setInterval(NewsmanAutoEvents, 5000);		
+			
+					detectXHR();
+			
+					function NewsmanAutoEvents(){							
+			
+						if(bufferedXHR || firstLoad)
+						{
+			
+							jQuery.post(ajaxurl, {  
+							post: true,
+							}, function (response) {				
+			
+								lastCart = JSON.parse(sessionStorage.getItem('lastCart'));						
+			
+								if(lastCart === null)
+									lastCart = {};	
+			
+								//check cache
+								if(lastCart.length > 0 && lastCart != null && lastCart != undefined && response.length > 0 && response != null && response != undefined)
+								{				
+									if(JSON.stringify(lastCart) === JSON.stringify(response))
+									{
+										if(!isProd)
+											console.log('newsman remarketing: cache loaded, cart is unchanged');
+			
+										lastCartFlag = true;					
+									}
+									else{
+										lastCartFlag = false;
+									}
+								}			
+			
+								if(response.length > 0 && lastCartFlag == false)
+								{
+									
+									_nzm.run('ec:setAction', 'clear_cart');										
+									_nzm.run( 'send', 'event', 'detail view', 'click', 'clearCart', null, _nzm.createFunctionWithTimeout(function() {												
+			
+										for (var item in response) {				
+			
+											_nzm.run( 'ec:addProduct', 
+												response[item]
+											);				
+				
+										}	
+			
+										_nzm.run( 'ec:setAction', 'add' );
+										_nzm.run( 'send', 'event', 'UX', 'click', 'add to cart' );
+			
+										sessionStorage.setItem('lastCart', JSON.stringify(response));					
+			
+										if(!isProd)
+											console.log('newsman remarketing: cart sent');
+			
+									}));										
+			
+								}
+								else{
+			
+									if(!isProd)
+										console.log('newsman remarketing: request not sent');
+			
+								}
+			
+								firstLoad = false;				
+								bufferedXHR = false;
+								
+							});
+			
+						}
+			
+					}
+			
+					function detectXHR() {	
+						
+						var proxied = window.XMLHttpRequest.prototype.send;
+						window.XMLHttpRequest.prototype.send = function() {		
+			
+							var pointer = this;
+							var validate = true;
+							var intervalId = window.setInterval(function(){
+			
+									if(pointer.readyState != 4){
+											return;
+									}
+									
+									var _location = pointer.getResponseHeader('access-control-allow-origin');				
+			
+									if(pointer.responseURL.indexOf('getCart.json') >= 0)
+									{							
+										validate = false;												
+									}
+									else{
+										validate = true;
+									}
+			
+									if(validate && !_location || _location == window.location.origin)
+									{
+										bufferedXHR = true;
+			
+										if(!isProd)
+											console.log('newsman remarketing: ajax request fired and catched from same domain');
+			
+										NewsmanAutoEvents();
+									}
+						
+									clearInterval(intervalId);
+					
+							}, 1);
+			
+							return proxied.apply(this, [].slice.call(arguments));
+						};	
+			
+					}
+			
+					function BufferClick(){
+			
+						window.onclick = function (e) {
+							const origin = ['a', 'input', 'span', 'i', 'button'];
+				
+							var click = e.target.localName;			
+			
+							if(!isProd)
+								console.log('newsman remarketing element clicked: ' + click);
+			
+							for (const element of origin) {
+								if(click == element)
+									bufferedClick = true;
+							}
+						}
+			
+					}
 
 
 TAG;
@@ -987,8 +815,6 @@ _nzm.run('send', 'pageview');
 
 
 TAG;
-
-
 
 			unset($this->session->data['ga_orderDetails']);
 
