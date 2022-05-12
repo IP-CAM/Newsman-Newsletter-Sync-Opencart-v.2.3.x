@@ -22,7 +22,7 @@ class ControllerExtensionmoduleNewsman extends Controller
         if (!empty($cron)) {
 
             if(empty($setting["newsmanuserid"]) || empty($setting["newsmanapikey"]) || empty($setting["newsmantype"]))
-            {             
+            {
                 $this->response->addHeader('Content-Type: application/json');
                 $this->response->setOutput(json_encode("403"));
                 return;
@@ -55,7 +55,7 @@ class ControllerExtensionmoduleNewsman extends Controller
 
             //Import
 
-            if ($setting["newsmantype"] == "customers") { 
+            if ($setting["newsmantype"] == "customers") {
                 
                 //Customers who ordered
                 
@@ -199,32 +199,32 @@ class ControllerExtensionmoduleNewsman extends Controller
             echo "Cron successfully done";
         }
         //cron
-        //webhooks   
+        //webhooks
         elseif(!empty($_GET["webhook"]) && $_GET["webhook"] == true)
-        {           
-            $var = file_get_contents('php://input');      
+        {
+            $var = file_get_contents('php://input');
 
-            $newsman_events = urldecode($var);   
-            $newsman_events = str_replace("newsman_events=", "", $newsman_events);                     
+            $newsman_events = urldecode($var);
+            $newsman_events = str_replace("newsman_events=", "", $newsman_events);
             $newsman_events = json_decode($newsman_events, true);
 
             foreach($newsman_events as $event)
-            {                  
+            {
                 if($event['type'] == "spam" || $event['type'] == "unsub")
-                {                         
+                {
                     $sql = "UPDATE  " . DB_PREFIX . "customer SET `newsletter`='0' WHERE `email`='" . $event["data"]["email"] . "'";
 
-                    $query = $this->db->query($sql);                               
+                    $query = $this->db->query($sql);
                 }
             }
-        }       
+        }
         elseif(!empty($_GET["newsman"]) && $_GET["newsman"] == "getCart.json")
         {
             $this->getCart();
-        } 
+        }
         else {
 
-            //fetch   
+            //fetch
             if(!empty($_GET["newsman"]))
             {
                 if(empty($setting["newsmanapiallow"]) || $setting["newsmanapiallow"] != "on")
@@ -236,7 +236,7 @@ class ControllerExtensionmoduleNewsman extends Controller
 
                 $this->newsmanFetchData($setting["newsmanapikey"]);
             }
-        }      
+        }
 
         return $this->load->view('extension/module/newsman', $data);
     }
@@ -250,9 +250,9 @@ class ControllerExtensionmoduleNewsman extends Controller
             $prod[] = array(
                 "id" => $cart_item['product_id'],
                 "name" => $cart_item["name"],
-                "price" => $cart_item["price"],						
+                "price" => $cart_item["price"],
                 "quantity" => $cart_item['quantity']
-            );							
+            );
                                     
          }
         
@@ -269,7 +269,7 @@ class ControllerExtensionmoduleNewsman extends Controller
         $orderId = (empty($_GET["order_id"])) ? "" : $_GET["order_id"];
         $start = (!empty($_GET["start"]) && $_GET["start"] >= 0) ? $_GET["start"] : 1;
         $limit = (empty($_GET["limit"])) ? 1000 : $_GET["limit"];
-	    $imgWH = (empty($_GET["imgWH"])) ? "-500x500" : "-" . $_GET["imgWH"];
+        $imgWH = (empty($_GET["imgWH"])) ? "-500x500" : "-" . $_GET["imgWH"];
 
         if (!empty($newsman) && !empty($apikey)) {
             $apikey = $_GET["apikey"];
@@ -289,15 +289,15 @@ class ControllerExtensionmoduleNewsman extends Controller
                     $this->load->model('catalog/product');
                     $this->load->model('checkout/order');
 
-                    $orders = $this->getOrders(array("start" => $start, "limit" => $limit));                    
+                    $orders = $this->getOrders(array("start" => $start, "limit" => $limit));
                     
                     if(!empty($orderId))
                     {
-                        $orders = $this->model_checkout_order->getOrder($orderId);                        
+                        $orders = $this->model_checkout_order->getOrder($orderId);
                         $orders = array(
                             $orders
                         );
-                    }                    
+                    }
 
                     foreach ($orders as $item) {
 
@@ -313,9 +313,9 @@ class ControllerExtensionmoduleNewsman extends Controller
                             if(!empty($prod["image"]))
                             {
                                 $image = explode(".", $prod["image"]);
-                                $image = $image[1];  
-                                $image = str_replace("." . $image, $imgWH . '.' . $image, $prod["image"]);    
-                                $image = 'https://' . $_SERVER['SERVER_NAME'] . '/image/cache/' . $image;                                
+                                $image = $image[1];
+                                $image = str_replace("." . $image, $imgWH . '.' . $image, $prod["image"]);
+                                $image = 'https://' . $_SERVER['SERVER_NAME'] . '/image/cache/' . $image;
                             }
 
                             $productsJson[] = array(
@@ -350,8 +350,8 @@ class ControllerExtensionmoduleNewsman extends Controller
                         );
                     }
 
-					$this->response->addHeader('Content-Type: application/json');
-					$this->response->setOutput(json_encode($ordersObj, JSON_PRETTY_PRINT));
+                    $this->response->addHeader('Content-Type: application/json');
+                    $this->response->setOutput(json_encode($ordersObj, JSON_PRETTY_PRINT));
                     return;
 
                     break;
@@ -383,10 +383,8 @@ class ControllerExtensionmoduleNewsman extends Controller
 
                         if(!empty($prod["image"]))
                         {
-                            $image = explode(".", $prod["image"]);
-                            $image = $image[1];  
-                            $image = str_replace("." . $image, $imgWH . '.' . $image, $prod["image"]);    
-                            $image = 'https://' . $_SERVER['SERVER_NAME'] . '/image/cache/' . $image;                                
+                            $this->load->model('tool/image');
+                            $image = $this->model_tool_image->resize($prod['image'], 500, 500);
                         }
 
                         $productsJson[] = array(
@@ -396,12 +394,12 @@ class ControllerExtensionmoduleNewsman extends Controller
                             "price" => $price,
                             "price_old" => $priceOld,
                             "image_url" => $image,
-                            "url" => 'https://' . $_SERVER['SERVER_NAME'] . '/index.php?route=product/product&product_id=' . $prod["product_id"]
+                            "url" => $this->url->link('product/product', 'product_id=' . $prod["product_id"])
                         );
                     }
 
-					$this->response->addHeader('Content-Type: application/json');
-					$this->response->setOutput(json_encode($productsJson, JSON_PRETTY_PRINT));
+                    $this->response->addHeader('Content-Type: application/json');
+                    $this->response->setOutput(json_encode($productsJson, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
                     return;
 
                     break;
@@ -419,8 +417,8 @@ class ControllerExtensionmoduleNewsman extends Controller
                         );
                     }
 
-					$this->response->addHeader('Content-Type: application/json');
-					$this->response->setOutput(json_encode($custs, JSON_PRETTY_PRINT));
+                    $this->response->addHeader('Content-Type: application/json');
+                    $this->response->setOutput(json_encode($custs, JSON_PRETTY_PRINT));
                     return;
 
                     break;
@@ -438,8 +436,8 @@ class ControllerExtensionmoduleNewsman extends Controller
                         );
                     }
 
-					$this->response->addHeader('Content-Type: application/json');
-					$this->response->setOutput(json_encode($subs, JSON_PRETTY_PRINT));
+                    $this->response->addHeader('Content-Type: application/json');
+                    $this->response->setOutput(json_encode($subs, JSON_PRETTY_PRINT));
                     return;
 
                     break;
@@ -543,9 +541,9 @@ class ControllerExtensionmoduleNewsman extends Controller
         $order_product_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "order_product WHERE order_id = '" . (int)$order_id . "'");
 
         return $order_product_query->rows;
-    }	
+    }
 
-	public function getSubscribers()
+    public function getSubscribers()
     {
         $sql = "SELECT * FROM " . DB_PREFIX . "newsletter";
 
@@ -554,7 +552,7 @@ class ControllerExtensionmoduleNewsman extends Controller
         return $query->rows;
     }
 
-	public function getSubscribersOcJournal()
+    public function getSubscribersOcJournal()
     {
         $sql = "SELECT * FROM oc_journal3_newsletter";
 
@@ -712,7 +710,7 @@ class ControllerExtensionmoduleNewsman extends Controller
     }
 
     //order hooks
-    public function eventAddOrderHistory($route,$data) {        
+    public function eventAddOrderHistory($route,$data) {
       
         $this->load->model('setting/setting');
 
@@ -727,13 +725,13 @@ class ControllerExtensionmoduleNewsman extends Controller
 
         $status = $this->getOrderStatus($data[1]);
             
-        $url = "https://ssl.newsman.app/api/1.2/rest/" . $userId . "/" . $apiKey . "/remarketing.setPurchaseStatus.json?list_id=" . $list . "&order_id=" . $data[0] . "&status=" . $status;        
+        $url = "https://ssl.newsman.app/api/1.2/rest/" . $userId . "/" . $apiKey . "/remarketing.setPurchaseStatus.json?list_id=" . $list . "&order_id=" . $data[0] . "&status=" . $status;
      
         $cURLConnection = curl_init();
         curl_setopt($cURLConnection, CURLOPT_URL, $url);
-        curl_setopt($cURLConnection, CURLOPT_RETURNTRANSFER, true);        
+        curl_setopt($cURLConnection, CURLOPT_RETURNTRANSFER, true);
         $ret = curl_exec($cURLConnection);
-        curl_close($cURLConnection);              
+        curl_close($cURLConnection);
 
     }
 
@@ -786,10 +784,10 @@ class ControllerExtensionmoduleNewsman extends Controller
             break;
             case 16:
                 $status = "Voided";
-            break;  
-	        default:
-	        	$status = "New";
-	        break;                                                
+            break;
+            default:
+                $status = "New";
+            break;
         }
 
         return $status;
@@ -798,3 +796,4 @@ class ControllerExtensionmoduleNewsman extends Controller
 }
 
 ?>
+
