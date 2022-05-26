@@ -291,9 +291,7 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
                           flag = true;
                         
                       if(seconds >= 5)
-                          flag = true;
-                        
-                      console.log(seconds);
+                          flag = true;                                           
                         
                       return flag;
                     }
