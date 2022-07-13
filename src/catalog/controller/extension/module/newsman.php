@@ -255,9 +255,10 @@ class ControllerExtensionmoduleNewsman extends Controller
             );
                                     
          }
-        
-        $this->response->addHeader('Content-Type: application/json');
-        $this->response->setOutput(json_encode($prod, JSON_PRETTY_PRINT));
+         
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($prod, JSON_PRETTY_PRINT);
+        exit();
         return;
     }
 

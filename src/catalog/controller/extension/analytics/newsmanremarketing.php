@@ -223,7 +223,7 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
                     var remarketingEndpoint = endpoint + '/js/retargeting/track.js';
                     var remarketingid = '$tracking_id';
 
-                    var _nzmPluginInfo = '1.2:opencart2.3.x';
+                    var _nzmPluginInfo = '1.3:opencart2.3.x';
                     var _nzm = _nzm || [];
                     var _nzm_config = _nzm_config || [];
                     _nzm_config['disable_datalayer'] = 1;
@@ -291,7 +291,7 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
                           flag = true;
                         
                       if(seconds >= 5)
-                          flag = true;                                           
+                          flag = true;
                         
                       return flag;
                     }
