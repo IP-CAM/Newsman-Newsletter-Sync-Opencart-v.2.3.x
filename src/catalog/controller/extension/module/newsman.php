@@ -256,10 +256,12 @@ class ControllerExtensionmoduleNewsman extends Controller
                                     
          }
          
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($prod, JSON_PRETTY_PRINT);
-        exit();
-        return;
+         header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+         header("Cache-Control: post-check=0, pre-check=0", false);
+         header("Pragma: no-cache");
+         header('Content-Type:application/json');
+         echo json_encode($prod, JSON_PRETTY_PRINT);
+         exit;
     }
 
     public function newsmanFetchData($_apikey)
@@ -998,7 +1000,4 @@ class ControllerExtensionmoduleNewsman extends Controller
         return $status;
     }
 
-}
-
-?>
-
+}?>
