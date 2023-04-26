@@ -726,6 +726,10 @@ TAG;
 						
 						$price = str_replace(',', '.', $item["price"]);
 						$price = str_replace('Lei', '', $price);
+						$price = str_replace('lei', '', $price);
+						$price = str_replace('RON', '', $price);
+						$price = str_replace('ron', '', $price);
+						$price = str_replace('$', '', $price);
 
 						$tag .= "				
 
