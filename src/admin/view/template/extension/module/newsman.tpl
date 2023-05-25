@@ -58,8 +58,12 @@
             </div>
         </div>
         <div class="col-md-12">
-            <b>CRON:</b>
-            <p>{yoursiteurl}/index.php?route=extension/module/newsman&cron=true</p>
+            <b>CRON for sync subscribers</b>
+            </p>{yoursiteurl}/index.php?route=module/newsman_import&apikey={yourapikey}&cron=true</p>
+            
+            <b>CRON for sync feed products:</b>
+            <p>{yoursiteurl}/index.php?route=module/newsman_import&newsman=products.json&apikey={yourapikey}&cron=true</p>
+         
         </div>
     </div>
 </div>
