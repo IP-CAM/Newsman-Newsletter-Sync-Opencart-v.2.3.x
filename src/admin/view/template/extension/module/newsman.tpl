@@ -59,7 +59,7 @@
         </div>
         <div class="col-md-12">
             <b>CRON for sync subscribers</b>
-            </p>{yoursiteurl}/index.php?route=module/newsman_import&apikey={yourapikey}&cron=true</p>
+            </p>{yoursiteurl}/index.php?route=module/newsman_import&cron=1&apikey={your_api_key}</p>
             
             <b>CRON for sync feed products:</b>
             <p>{yoursiteurl}/index.php?route=module/newsman_import&newsman=products.json&apikey={yourapikey}&cron=true</p>
