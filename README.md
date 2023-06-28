@@ -30,7 +30,7 @@ Manual installation:
 For the lists to show up in this form, you need to set up your user id and api key.
 
 For the automatic synchronization to work, you must setup a webcron to run this URL:
-`{yoursiteurl}/index.php?route=module/newsman_import&newsman=products.json&apikey={yourapikey}`
+`{yoursiteurl}/index.php?route=module/newsman_import&cron=1&apikey={yourapikey}`
 
 ## Newsman Remarketing
 
