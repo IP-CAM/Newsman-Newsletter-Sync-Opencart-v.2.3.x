@@ -220,7 +220,7 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 		//Newsman remarketing tracking code REPLACEABLE
 
 		var remarketingid = '$tracking_id';
-		var _nzmPluginInfo = '1.4:opencart2.3.x';
+		var _nzmPluginInfo = '1.5:opencart2.3.x';
 
 		//Newsman remarketing tracking code REPLACEABLE
 
@@ -397,10 +397,10 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 							}
 						}
 						if (response.length > 0 && lastCartFlag == false) {
-							addToCart(response);
+							nzmAddToCart(response);
 						}//send only when on last request, products existed
 						else if (response.length == 0 && lastCart.length > 0 && unlockClearCart) {
-							clearCart();
+							nzmClearCart();
 							if (!isProd)
 								console.log('newsman remarketing: clear cart sent');
 						} else {
@@ -427,13 +427,13 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 					console.log('newsman remarketing: !buffered xhr || first load');
 			}
 		}
-		function clearCart() {
+		function nzmClearCart() {
 			_nzm.run('ec:setAction', 'clear_cart');
 			_nzm.run('send', 'event', 'detail view', 'click', 'clearCart');
 			sessionStorage.setItem('lastCart', JSON.stringify([]));
 			unlockClearCart = false;
 		}
-		function addToCart(response) {
+		function nzmAddToCart(response) {
 			_nzm.run('ec:setAction', 'clear_cart');
 			if (!isProd)
 				console.log('newsman remarketing: clear cart sent, add to cart function');
@@ -781,7 +781,7 @@ TAG;
 					//Newsman remarketing tracking code REPLACEABLE
 
 					var remarketingid = '$tracking_id';
-					var _nzmPluginInfo = '1.4:opencart2.3.x';
+					var _nzmPluginInfo = '1.5:opencart2.3.x';
 			
 					//Newsman remarketing tracking code REPLACEABLE
 			
@@ -958,10 +958,10 @@ TAG;
 										}
 									}
 									if (response.length > 0 && lastCartFlag == false) {
-										addToCart(response);
+										nzmAddToCart(response);
 									}//send only when on last request, products existed
 									else if (response.length == 0 && lastCart.length > 0 && unlockClearCart) {
-										clearCart();
+										nzmClearCart();
 										if (!isProd)
 											console.log('newsman remarketing: clear cart sent');
 									} else {
@@ -988,13 +988,13 @@ TAG;
 								console.log('newsman remarketing: !buffered xhr || first load');
 						}
 					}
-					function clearCart() {
+					function nzmClearCart() {
 						_nzm.run('ec:setAction', 'clear_cart');
 						_nzm.run('send', 'event', 'detail view', 'click', 'clearCart');
 						sessionStorage.setItem('lastCart', JSON.stringify([]));
 						unlockClearCart = false;
 					}
-					function addToCart(response) {
+					function nzmAddToCart(response) {
 						_nzm.run('ec:setAction', 'clear_cart');
 						if (!isProd)
 							console.log('newsman remarketing: clear cart sent, add to cart function');
@@ -1082,7 +1082,6 @@ TAG;
 
 
 			$tag .= <<<TAG
-_nzm.identify({'email': '$email'});
 $products_event
 _nzm.run('ec:setAction', 'purchase', $purchase_event);
 _nzm.run('send', 'pageview');
