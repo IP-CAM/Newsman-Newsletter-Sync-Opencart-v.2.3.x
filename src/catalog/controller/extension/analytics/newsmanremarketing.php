@@ -271,7 +271,7 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 
 		//Newsman remarketing auto events
 
-		var isProd = false;
+		var isProd = true;
 		let lastCart = sessionStorage.getItem('lastCart');
 		if (lastCart === null)
 			lastCart = {};
@@ -832,7 +832,7 @@ TAG;
 			
 					//Newsman remarketing auto events
 
-					var isProd = false;
+					var isProd = true;
 					let lastCart = sessionStorage.getItem('lastCart');
 					if (lastCart === null)
 						lastCart = {};
