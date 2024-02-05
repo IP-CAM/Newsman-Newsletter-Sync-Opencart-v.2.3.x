@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+    <name>Newsman Remarketing</name>
+    <version>1.0.0</version>
+    <code>newsmanremarketing-1.0.0</code>
+    <author>Newsman</author>
+    <link>https://newsman.app/</link>
+    <file path="catalog/controller/checkout/success.php">
+        <operation>
+            <search trim="true"><![CDATA[ if (isset($this->session->data['order_id'])) { ]]></search>
+            <add position="after"><![CDATA[ $this->session->data['ga_orderDetails'] = NULL; 
+            $this->session->data['ga_orderProducts'] = NULL;
+             if (isset($this->session->data['order_id'])) 
+             { 
+                 $this->load->model('checkout/order'); 
+                 $this->load->model('account/order');
+                $this->session->data['ga_orderDetails'] = $this->model_checkout_order->getOrder($this->session->data['order_id']); 
+                $this->session->data['ga_orderProducts'] = $this->model_account_order->getOrderProducts($this->session->data['order_id']);
+             }
+            ]]>
+            </add>
+        </operation>
+    </file>
+    <file path="catalog/controller/product/category.php">
+        <operation>
+            <search trim="true"><![CDATA[ $data['sorts'] = array(); ]]></search>
+            <add position="after"><![CDATA[
+            $this->session->data['ga_orderDetails'] = NULL;
+                $this->session->data['ga_orderDetails'] = $data['products'];
+            ]]></add>
+        </operation>
+    </file>
+    <file path="catalog/controller/checkout/cart.php">
+        <operation>
+            <search trim="true"><![CDATA[ $data['vouchers'] = array(); ]]></search>
+            <add position="after"><![CDATA[
+            $this->session->data['ga_orderDetails'] = NULL;
+                $this->session->data['ga_orderDetails'] = $data['products'];
+            ]]></add>
+        </operation>
+    </file>
+</modification>
