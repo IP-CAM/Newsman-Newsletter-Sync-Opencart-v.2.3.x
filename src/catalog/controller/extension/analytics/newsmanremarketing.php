@@ -220,7 +220,7 @@ class ControllerExtensionAnalyticsNewsmanremarketing extends Controller
 		//Newsman remarketing tracking code REPLACEABLE
 
 		var remarketingid = '$tracking_id';
-		var _nzmPluginInfo = '1.5:opencart2.3.x';
+		var _nzmPluginInfo = '1.6:opencart2.3.x';
 
 		//Newsman remarketing tracking code REPLACEABLE
 
@@ -781,7 +781,7 @@ TAG;
 					//Newsman remarketing tracking code REPLACEABLE
 
 					var remarketingid = '$tracking_id';
-					var _nzmPluginInfo = '1.5:opencart2.3.x';
+					var _nzmPluginInfo = '1.6:opencart2.3.x';
 			
 					//Newsman remarketing tracking code REPLACEABLE
 			
