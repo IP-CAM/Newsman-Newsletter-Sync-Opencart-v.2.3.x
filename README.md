@@ -1,94 +1,112 @@
 # OpenCart 2.3 - Newsman Newsletter Sync
-[Newsman](https://www.newsmanapp.com) plugin for OpenCart 2.3. Sync your OpenCart customers / subscribers to Newsman list / segments.
 
-This is the easiest way to connect your Shop with [Newsman](https://www.newsmanapp.com).
-Generate an API KEY in your [Newsman](https://www.newsmanapp.com) account, install this plugin and you will be able to sync your shop customers and newsletter subscribers with Newsman list / segments.
+Use the NewsMAN plugin for OpenCart 2.3 to connect your customers and subscribers with [NewsMAN](https://www.newsmanapp.com) lists and segments easily. It's a straightforward way to integrate your shop with NewsMAN. Simply generate an API KEY in your NewsMAN account, install the plugin, and start syncing your ecommerce data to your email marketing platform.
 
 ![image](https://raw.githubusercontent.com/Newsman/OpenCart2.3-Newsman/master/assets/newsmanBr.jpg)
 
 # Installation
 
-## Newsman Sync
-
-Manual installation:
-1.  Copy contents of the src folder and paste to your opencart 2.3 root directory
-2.  Go to admin->Extensions->Extenstion->Choose the extension type->Modules-> and then install Newsman Newsletter Sync module
-3.  After installation edit the Newsman Newsletter Sync module
+For manual installation, follow these steps:
+1. Copy the files from the "uploads" folder and paste them into tyour OpenCart root directory.
+2. Provide user privileges in the admin section by going to admin->System->Users->User Groups
+3. Navigate to admin->Extensions->Modules and install the NewsMAN Newsletter Sync module.
+4. After installation, go ahead and customize the settings for the NewsMAN Newsletter Sync module.
 
 ## Newsman Remarketing
 
-1. Extensions -> Installer -> Upload newsmanremarketing.ocmod.zip
-2. Extensions -> Modifications -> Refresh
-3. Extensions -> Extensions -> Analytics -> Newsman Remarketing
+To configure NewsMAN Remarketing, please follow these instructions:
+
+1.Go to Extensions -> Installer -> Upload NewsMANremarketing.ocmod.xml.
+2. Refresh the modifications by visiting Extensions -> Modifications -> Refresh.
+3. Then, go to Extensions -> Analytics -> NewsMAN Remarketing.
+3. Input your Remarketing ID from your NewsMAN account in Settings -> Remarketing. Activate the Remarketing option and save your configurations.
+
 
 # Setup
 
-- The process is automated, login with Newsman via Oauth and the settings will get automatically filled based on your selection
+1. The setup is streamlined – by logging in to NewsMAN via OAuth, your preferences will be seamlessly utilized to automatically populate the settings.
 
 ![image](https://raw.githubusercontent.com/Newsman/OpenCart2.3-Newsman/master/assets/oauth1.png)
 ![image](https://raw.githubusercontent.com/Newsman/OpenCart2.3-Newsman/master/assets/oauth2.png)
 
-2. Choose List for your newsletter subscribers
-For the lists to show up in this form, you need to set up your user id and api key.
+2. Provide your NewsMAN API KEY and User ID, and subsequently, click on the "Connect" button.
+3. Choose the NewsMAN Segment to associate with your newsletter subscribers and customer groups. All your groups will be displayed, allowing you the flexibility to either ignore a group or upload its members while integrating them into any segment. It's essential to preconfigure these segments in your NewsMAN account to ensure their availability in this form.
 
-For the automatic synchronization to work, you must setup a webcron to run this URL:
-`{yoursiteurl}/index.php?route=module/newsman_import&cron=1&apikey={yourapikey}`
+To activate automatic synchronization, configure a webcron to execute the URL provided in your NewsMAN settings.
 
 ## Newsman Remarketing
 
 1. Fill in your Newsman Remarketing ID and save
 ![](https://raw.githubusercontent.com/Newsman/OpenCart2.3-Newsman/master/assets/nr1.png)
 
-# Description
+Description
 
-With the NewsMAN Plugin for Opencart 2.3, you have the power to streamline your email and SMS marketing efforts. This tool enables you to manage subscription forms, contact lists, newsletters, email campaigns, SMS functionalities, smart automations, detailed analytics, and ensure reliable transactional emails - all accessed through the NewsMAN platform, providing you with enhanced marketing capabilities.
+Level up Your Ecommerce Marketing with the NewsMAN Plugin for Opencart 2.3.
+Take control of your email and SMS marketing strategies using the versatile NewsMAN Plugin. Streamline the management of subscription forms, contact lists, newsletters, campaigns, SMS features, automations, and detailed analytics effortlessly within the NewsMAN platform.
 
-# Subscription Forms & Pop-ups:
+Create Compelling Subscription Experiences
 
-* Create: Craft visually engaging subscription forms and pop-ups, like embedded newsletter signups or exit-intent popups, strategically capturing potential leads before they leave. Customize these forms with compelling visuals and user-friendly designs to entice visitors effectively.
+Visually Captivate Interest:
+Develop visually appealing subscription forms and pop-ups, including embedded newsletter signups or exit-intent popups, strategically capturing potential leads before they leave.
 
-* Sync: Ensure forms are consistent across multiple platforms by synchronizing them, regardless of the device used. This maintains a smooth user experience and upholds brand consistency.
+Customize with Visual Allure:
+Personalize forms with captivating visuals and user-friendly designs to attract and engage visitors effectively
 
-* Connect to Automations: Seamlessly integrate subscription forms with automated workflows. This enables the activation of welcome emails or specific responses upon form submissions, enhancing user engagement through automated processes.
+Consistency Across Platforms:
+Guarantee a consistent user experience across various platforms by synchronizing forms and maintaining brand consistency.
 
-# Contact Lists & Segments:
+Automate with Workflows
+Seamlessly integrate subscription forms into automated workflows, streamlining processes and enhancing efficiency.
 
-* Auto Import Sync: Automate the import and synchronization of contact lists from different sources such as websites, e-commerce platforms, or marketing/sales software. This streamlines data management, ensuring your contact information remains accurate and updated effortlessly.
+Simplify Contact Lists & Segmentation
+Streamlined Import Synchronization
+Automate the import and synchronization of contact lists from various sources, simplifying data handling with minimal intervention.
 
-* Advanced Segmentation: Utilize demographic or behavioral segmentation techniques to better target specific audience segments. Tailor offers or promotions specific to regions based on users' interests and behaviors, enhancing the relevance of your marketing approaches.
+Advanced Segmentation Techniques
+Harness advanced segmentation methods based on demographics or user behavior to effectively pinpoint specific audience segments.
 
-# Marketing Campaigns (Email and SMS):
+Email & SMS Marketing Campaigns
 
-* Mass Campaigns: Send newsletters or promotional offers to a broad subscriber base with convenience. This keeps your audience engaged with regular updates on fresh products or services.
+Seamless Broadcasts Campaigns
+Easily send newsletters or promotional offers to a broad subscriber base, maintaining audience engagement through regular updates on new products.
 
-* Segmented & Personalized: Tailor campaigns to resonate individually with subscribers by personalizing content. Address subscribers by name or suggest products aligned with their preferences or past interactions, ensuring personalized engagement.
+Individually Crafted & Personalized Approach
+Tailor campaigns for a unique connection with subscribers by customizing content, addressing recipients by name, or recommending products in line with their preferences.
 
-* Resend to Unopened: Re-engage subscribers effectively by resending campaigns to those who haven't opened the initial email. Modify content to enhance interaction and expand reach, fostering increased engagement.
+Revitalize Engagement via Resending
+Effectively rekindle connection with subscribers by re-sending campaigns to those who haven't opened the initial email, adapting content to improve interaction and expand your outreach.
 
-* A/B Tests: Improve campaign performance by experimenting with various elements such as subject lines, content formats, or visuals through A/B tests. Identify the most effective strategies to refine your approach.
+Explore A/B Testing
+Improve campaign performance through A/B tests, experimenting with subject lines, content formats, or visuals to pinpoint the most effective strategies.
 
-* Fully Automated: Optimize campaign performance through experimentation with various elements like subject lines, content formats, or visuals to identify the most effective strategies.
+Advanced Automation:
+Refine campaign efficiency through experimentation with various elements, identifying optimal strategies for heightened performance.
 
-# Marketing Automation (Email & SMS):
+Automated Email & SMS Marketing Sequences
+E-commerce & Comprehensive Automation
+Automate customized product recommendations or follow-up emails based on user behavior, elevating user engagement and delivering personalized experiences.
 
-* E-commerce & Non-E-commerce: Automate personalized product suggestions or follow-up emails based on user behavior, enhancing user engagement and providing customized experiences.
+Handling Cart Abandonment & Highlighting Products
+Strategically address cart abandonment or display related products to motivate users to complete their purchase journey.
 
-* Cart Abandonment & Product Views: Strategically address cart abandonment or showcase related products to encourage users to finalize their purchase journey, reclaiming potential sales opportunities.
+Post-Purchase Engagement
+Collect post-purchase feedback to fortify relationships and enhance products/services based on valuable testimonials, boosting customer satisfaction.
 
-* Order Review & Post-Purchase: Gather post-purchase feedback to bolster relationships and refine products/services based on valuable testimonials, strengthening customer satisfaction.
+In-Depth Workflow Design
+Create extensive workflows triggered by specific user actions, guiding users through various touchpoints in their journey to ensure a seamless user experience.
 
-* Extensive Automation Flows: Develop comprehensive workflows triggered by specific user actions. Guide users through diverse touchpoints in their journey, such as onboarding sequences or re-engagement strategies, ensuring a fluid user experience.
+Revitalize E-commerce Remarketing
 
-# Ecommerce Remarketing:
+Precision Targeting:
+Reconnect with subscribers by sending precisely targeted offers or reminders based on their past interactions, amplifying the effectiveness of re-engagement strategies.
 
-* Efficient Targeting: Reconnect with subscribers by sending targeted offers or reminders based on their past interactions, amplifying the effectiveness of re-engagement strategies.
+Tailored Communication:
+Customize engagements with exclusive offers or reminders tailored to users' behavior or preferences, nurturing a feeling of exclusivity and fostering increased engagement.
 
-* Custom Flows: Personalize interactions by providing exclusive offers or reminders based on users' behavior or preferences, fostering a sense of exclusivity and engagement.
+Streamlined SMTP Transactional Emails
 
-# SMTP Transactional Email & SMS:
-
-* Transactional Emails: Guarantee the prompt and reliable delivery of critical messages, such as order confirmations or shipping notifications, through SMTP. This ensures users consistently receive important communications without delay.
-
-# Extended Email and SMS Statistics:
-
-* Comprehensive Insights: Gain comprehensive insights into open rates, click-through rates, conversion rates, and overall campaign performance. These detailed analytics empower data-driven decision-making, refining future campaigns and enhancing overall performance.
+Punctual & Reliable Delivery:
+Guarantee the timely and dependable delivery of crucial messages, like order confirmations or shipping notifications, through SMTP.
+Thorough Email and SMS Insights
+Comprehensive Performance Evaluation:
+Attain comprehensive insights into open rates, click-through rates, conversion rates, and overall campaign performance for informed decision-making and refining future campaigns.
