@@ -70,12 +70,12 @@ class ControllerExtensionmoduleNewsman extends Controller
                     );
 
                     if ((count($customers_to_import) % $batchSize) == 0) {
-                        $this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                        $this->_importData($customers_to_import, $setting["newsmanlistid"], $client, $segments);
                     }
                 }
 
                 if (count($customers_to_import) > 0) {
-                    $this->_importData($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                    $this->_importData($customers_to_import, $setting["newsmanlistid"], $client, $segments);
                 }
 
                 unset($customers_to_import);
@@ -135,12 +135,12 @@ class ControllerExtensionmoduleNewsman extends Controller
                         );
 
                         if ((count($customers_to_import) % $batchSize) == 0) {
-                            $this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                            $this->_importDatas($customers_to_import, $setting["newsmanlistid"], $client, $segments);
                         }
                     }
 
                     if (count($customers_to_import) > 0) {
-                        $this->_importDatas($customers_to_import, $setting["newsmanlistid"], $segments, $client);
+                        $this->_importDatas($customers_to_import, $setting["newsmanlistid"], $client, $segments);
                     }
 
                     unset($customers_to_import);
@@ -455,6 +455,92 @@ class ControllerExtensionmoduleNewsman extends Controller
             
                     break;
 
+                    case "coupons.json":
+
+                        try {
+                            $discountType = !isset($this->request->get['type']) ? -1 : (int)$this->request->get['type'];
+                            $value = !isset($this->request->get['value']) ? -1 : (int)$this->request->get['value'];
+                            $batch_size = !isset($this->request->get['batch_size']) ? 1 : (int)$this->request->get['batch_size'];
+                            $prefix = !isset($this->request->get['prefix']) ? "" : $this->request->get['prefix'];
+                            $expire_date = isset($this->request->get['expire_date']) ? $this->request->get['expire_date'] : null;
+                            $min_amount = !isset($this->request->get['min_amount']) ? -1 : (float)$this->request->get['min_amount'];
+                            $currency = isset($this->request->get['currency']) ? $this->request->get['currency'] : "";
+    
+                            if ($discountType == -1) {
+                                $this->response->setOutput(json_encode(array(
+                                    "status" => 0,
+                                    "msg" => "Missing type param"
+                                )));
+                                return;
+                            }
+                            if ($value == -1) {
+                                $this->response->setOutput(json_encode(array(
+                                    "status" => 0,
+                                    "msg" => "Missing value param"
+                                )));
+                                return;
+                            }
+    
+                            $couponsList = array();
+    
+                            for ($int = 0; $int < $batch_size; $int++) {
+                                $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                                $coupon_code = '';
+    
+                                do {
+                                    $coupon_code = '';
+                                    for ($i = 0; $i < 8; $i++) {
+                                        $coupon_code .= $characters[rand(0, strlen($characters) - 1)];
+                                    }
+                                    $full_coupon_code = $prefix . $coupon_code;
+                                    $existing_coupon = $this->db->query("SELECT coupon_id FROM " . DB_PREFIX . "coupon WHERE code = '" . $this->db->escape($full_coupon_code) . "'");
+                                } while ($existing_coupon->num_rows > 0);
+    
+                                $coupon_data = array(
+                                    'name' => 'Generated Coupon ' . $full_coupon_code,
+                                    'code' => $full_coupon_code,
+                                    'discount' => $value,
+                                    'type' => ($discountType == 1) ? 'P' : 'F',
+                                    'total' => ($min_amount != -1) ? $min_amount : 0,
+                                    'logged' => 0,
+                                    'shipping' => 0,
+                                    'date_start' => date('Y-m-d'),
+                                    'date_end' => ($expire_date != null) ? date('Y-m-d', strtotime($expire_date)) : '9999-12-31',
+                                    'uses_total' => 1,
+                                    'uses_customer' => 1,
+                                    'status' => 1
+                                );
+    
+                                $this->db->query("INSERT INTO " . DB_PREFIX . "coupon SET " .
+                                    "name = '" . $this->db->escape($coupon_data['name']) . "', " .
+                                    "code = '" . $this->db->escape($coupon_data['code']) . "', " .
+                                    "discount = '" . (float)$coupon_data['discount'] . "', " .
+                                    "type = '" . $this->db->escape($coupon_data['type']) . "', " .
+                                    "total = '" . (float)$coupon_data['total'] . "', " .
+                                    "logged = '" . (int)$coupon_data['logged'] . "', " .
+                                    "shipping = '" . (int)$coupon_data['shipping'] . "', " .
+                                    "date_start = '" . $this->db->escape($coupon_data['date_start']) . "', " .
+                                    "date_end = '" . $this->db->escape($coupon_data['date_end']) . "', " .
+                                    "uses_total = '" . (int)$coupon_data['uses_total'] . "', " .
+                                    "uses_customer = '" . (int)$coupon_data['uses_customer'] . "', " .
+                                    "status = '" . (int)$coupon_data['status'] . "'");
+    
+                                $couponsList[] = $full_coupon_code;
+                            }
+    
+                            $this->response->setOutput(json_encode(array(
+                                "status" => 1,
+                                "codes" => $couponsList
+                            )));
+                        } catch (Exception $exception) {
+                            $this->response->setOutput(json_encode(array(
+                                "status" => 0,
+                                "msg" => $exception->getMessage()
+                            )));
+                        }                    
+    
+                        break;
+
             }
         } else {
            //allow
@@ -564,7 +650,7 @@ class ControllerExtensionmoduleNewsman extends Controller
         return $query->rows;
     }
 
-    public function _importDatas(&$data, $list, $segments = null, $client)
+    public function _importDatas(&$data, $list, $client, $segments = null)
     {
         $csv = '"email","source"' . PHP_EOL;
 
@@ -597,7 +683,7 @@ class ControllerExtensionmoduleNewsman extends Controller
         return '"' . str_replace('"', '""', $str) . '"';
     }
 
-    public function _importData(&$data, $list, $segments = null, $client)
+    public function _importData(&$data, $list, $client, $segments = null)
     {
         $csv = '"email","fullname","source"' . PHP_EOL;
 
