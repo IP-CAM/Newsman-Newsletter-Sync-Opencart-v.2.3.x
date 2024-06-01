@@ -266,7 +266,11 @@ class ControllerExtensionmoduleNewsman extends Controller
 
     public function newsmanFetchData($_apikey)
     {
-        $apikey = (empty($_GET["apikey"])) ? "" : $_GET["apikey"];
+        $apikey = (empty($_GET["nzmhash"])) ? "" : $_GET["nzmhash"];
+        $authorizationHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : '';
+        if (strpos($authorizationHeader, 'Bearer') !== false) {
+            $apikey = trim(str_replace('Bearer', '', $authorizationHeader));
+        }
         $newsman = (empty($_GET["newsman"])) ? "" : $_GET["newsman"];
         $productId = (empty($_GET["product_id"])) ? "" : $_GET["product_id"];
         $orderId = (empty($_GET["order_id"])) ? "" : $_GET["order_id"];
@@ -275,7 +279,6 @@ class ControllerExtensionmoduleNewsman extends Controller
         $imgWH = (empty($_GET["imgWH"])) ? "-500x500" : "-" . $_GET["imgWH"];
     
         if (!empty($newsman) && !empty($apikey)) {
-            $apikey = $_GET["apikey"];
             $currApiKey = $_apikey;
 
             if ($apikey != $currApiKey) {

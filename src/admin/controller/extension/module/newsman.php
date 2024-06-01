@@ -87,7 +87,7 @@ class ControllerExtensionModuleNewsman extends Controller
 
 			$client = new Newsman_Client($setting["newsmanuserid"], $setting["newsmanapikey"]);
 
-			$url = 'https://' . $_SERVER['SERVER_NAME'] . "/index.php?route=extension/module/newsman&newsman=products.json&apikey=" . $setting["newsmanapikey"];
+			$url = 'https://' . $_SERVER['SERVER_NAME'] . "/index.php?route=extension/module/newsman&newsman=products.json&nzmhash=" . $setting["newsmanapikey"];
 
 			try{
 				$ret = $client->feeds->setFeedOnList($_POST["list"], $url, 'https://' . $_SERVER['SERVER_NAME'], "NewsMAN");	
